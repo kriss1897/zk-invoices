@@ -56,7 +56,9 @@ From UI directory
 ## Demo
 
 ZkApp Address: B62qmUQ7bpqVr4P3gj7RbmNmEdnA892NqwSJcmxgN6xMDVamiXQgAy8
-Video Link: https://drive.google.com/file/d/1Ve25YMdzOKvg6JQK1EuPgnMpcyYqF8Xt/view?usp=sharing
+Videos Link:
+- Intro: https://www.loom.com/share/de683052758b479ea7bcd663dab47edf?sid=74bc0514-a4cb-40ef-b697-2dadb44f74bd
+- Transaction and Conclusion: https://www.loom.com/share/4f6c6593c84b42408e558168e8a04cff?sid=20dc91df-ae88-48d6-a1b7-08be59b6fa9e
 
 This videos show two transactions which were not completed in the demo. The links to those transactions are:
 - https://minascan.io/berkeley/tx/5JuftGFcdFaTZghtrDrWsM3obneQYapiQd2yr3TzoDx7faLqtTFS
