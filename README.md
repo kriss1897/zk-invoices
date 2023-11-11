@@ -52,3 +52,12 @@ From contracts directory
 
 From UI directory
 - Run locally: `npm run dev`
+
+## Demo
+
+ZkApp Address: B62qmUQ7bpqVr4P3gj7RbmNmEdnA892NqwSJcmxgN6xMDVamiXQgAy8
+Video Link: https://drive.google.com/file/d/1Ve25YMdzOKvg6JQK1EuPgnMpcyYqF8Xt/view?usp=sharing
+
+This videos show two transactions which were not completed in the demo. The links to those transactions are:
+- https://minascan.io/berkeley/tx/5JuftGFcdFaTZghtrDrWsM3obneQYapiQd2yr3TzoDx7faLqtTFS
+- https://minascan.io/berkeley/tx/5JtX9rXnxoH3EBLdyjtBnPBzDKP39G8V27qN8b5GqPjKR1ks8ty1
