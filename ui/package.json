@@ -14,14 +14,18 @@
     "@types/react": "18.2.36",
     "@types/react-dom": "18.2.14",
     "autoprefixer": "10.4.16",
+    "comlink": "^4.4.1",
     "eslint": "8.53.0",
     "eslint-config-next": "14.0.1",
     "next": "14.0.1",
+    "o1js": "0.*",
     "postcss": "8.4.31",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "tailwindcss": "3.3.5",
-    "typescript": "5.2.2",
-    "o1js": "0.*"
+    "typescript": "5.2.2"
+  },
+  "devDependencies": {
+    "worker-plugin": "^5.0.1"
   }
 }
