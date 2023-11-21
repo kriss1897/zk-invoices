@@ -1,13 +1,9 @@
 import Head from "next/head";
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import GradientBG from "../components/GradientBG.js";
-import styles from "../styles/Home.module.css";
-import heroMinaLogo from "../../public/assets/hero-mina-logo.svg";
-import arrowRightSmall from "../../public/assets/arrow-right-small.svg";
-import { Invoices } from "../../../contracts/build/src";
 
 import { PrivateKey } from 'o1js';
+
+import { addDoc, collection, getDocs, getFirestore, onSnapshot, query } from "firebase/firestore";
 
 function useRandomInvoice() {
   const [invoice, setInvoice] = useState({
@@ -27,7 +23,42 @@ function useRandomInvoice() {
   return { invoice, regenerate };
 }
 
-export default function Home() {
+function ShortAddress({ address, length = 3 }: { address: string, length?: number }) {
+  return <p>{address.slice(0, length)}...{address.slice(address.length - length)}</p>
+}
+
+function Invoices() {
+  const [invoices, setInvoices] = useState<any[]>([]);
+
+  useEffect(() => {
+    const db = getFirestore();
+
+    onSnapshot(
+      query(collection(db, 'invoices')),
+      (snap) => setInvoices(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })))
+    );
+  }, []);
+
+  return <div className="space-y-4 max-w-2xl mx-auto">
+    <h2 className="text-2xl">Invoices</h2>
+    { invoices.map((invoice, idx) => <div className="shadow-lg p-2 rounded-lg bg-white" key={`invoice:${invoice.id}`}>
+        <div className="flex flex-row">
+          <div className="grow">
+            <small className="text-gray-400 mt-4">From</small>
+            <ShortAddress address={invoice.from} length={5}/>
+            <small className="text-gray-400 mt-4">To</small>
+            <ShortAddress address={invoice.to} length={5}/>
+          </div>
+          <div className="w-32 text-center align-middle mt-8 text-xl font-medium">
+            <p>Rs. {invoice.amount}</p>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+}
+
+function HomeContent() {
   const _workerRef = useRef<Worker>();
   const [loading, setLoading] = useState(true);
   const [txnLoading, setTxnLoading] = useState(false);
@@ -82,7 +113,6 @@ export default function Home() {
     } catch (error: any) {
       setTxnLoading(true);
       setStatus(error.message);
-      console.log(error);
     }
   }
 
@@ -93,9 +123,15 @@ export default function Home() {
   }
 
   async function createInvoice() {
-    _workerRef.current?.postMessage({ action: 'createInvoice', data: invoice });
-    setStatus('');
-    setTxnLoading(true);
+    const db = getFirestore();
+    const _col = collection(db, 'invoices');
+    
+    addDoc(_col, invoice);
+    regenerate();
+
+    // _workerRef.current?.postMessage({ action: 'createInvoice', data: invoice });
+    // setStatus('');
+    // setTxnLoading(true);
   }
 
   async function loadAccounts() {
@@ -121,7 +157,7 @@ export default function Home() {
   if (loading) {
     return <>
       <Head>
-        <title>Mina zkApp UI</title>
+        <title>zk Invoices</title>
         <meta name="description" content="built with o1js" />
         <link rel="icon" href="/assets/favicon.ico" />
       </Head>
@@ -136,7 +172,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Mina zkApp UI</title>
+        <title>zk Invoices</title>
         <meta name="description" content="built with o1js" />
         <link rel="icon" href="/assets/favicon.ico" />
       </Head>
@@ -177,4 +213,11 @@ export default function Home() {
       </div>
     </>
   );
+}
+
+export default function Home() {
+  return <>
+    <HomeContent />
+    <Invoices />
+  </>
 }
