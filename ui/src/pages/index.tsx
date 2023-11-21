@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { PrivateKey } from 'o1js';
 
-import { addDoc, collection, getDocs, getFirestore, onSnapshot, query } from "firebase/firestore";
+import { addDoc, collection, getDocs, getFirestore, onSnapshot, orderBy, query } from "firebase/firestore";
 
 function useRandomInvoice() {
   const [invoice, setInvoice] = useState({
@@ -34,7 +34,7 @@ function Invoices() {
     const db = getFirestore();
 
     onSnapshot(
-      query(collection(db, 'invoices')),
+      query(collection(db, 'invoices'), orderBy('createdAt', 'desc')),
       (snap) => setInvoices(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })))
     );
   }, []);
@@ -126,7 +126,7 @@ function HomeContent() {
     const db = getFirestore();
     const _col = collection(db, 'invoices');
     
-    addDoc(_col, invoice);
+    addDoc(_col, Object.assign({ createdAt: new Date() }, invoice));
     regenerate();
 
     // _workerRef.current?.postMessage({ action: 'createInvoice', data: invoice });
