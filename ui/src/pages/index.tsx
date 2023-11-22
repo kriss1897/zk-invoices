@@ -1,9 +1,8 @@
 import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
-
-import { PrivateKey } from 'o1js';
-
-import { addDoc, collection, getDocs, getFirestore, onSnapshot, orderBy, query } from "firebase/firestore";
+import { addDoc, collection, getFirestore } from "firebase/firestore";
+import { PrivateKey } from "o1js";
+import Invoices from "@/components/Invoices";
 
 function useRandomInvoice() {
   const [invoice, setInvoice] = useState({
@@ -21,41 +20,6 @@ function useRandomInvoice() {
   }
 
   return { invoice, regenerate };
-}
-
-function ShortAddress({ address, length = 3 }: { address: string, length?: number }) {
-  return <p>{address.slice(0, length)}...{address.slice(address.length - length)}</p>
-}
-
-function Invoices() {
-  const [invoices, setInvoices] = useState<any[]>([]);
-
-  useEffect(() => {
-    const db = getFirestore();
-
-    onSnapshot(
-      query(collection(db, 'invoices'), orderBy('createdAt', 'desc')),
-      (snap) => setInvoices(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })))
-    );
-  }, []);
-
-  return <div className="space-y-4 max-w-2xl mx-auto">
-    <h2 className="text-2xl">Invoices</h2>
-    { invoices.map((invoice, idx) => <div className="shadow-lg p-2 rounded-lg bg-white" key={`invoice:${invoice.id}`}>
-        <div className="flex flex-row">
-          <div className="grow">
-            <small className="text-gray-400 mt-4">From</small>
-            <ShortAddress address={invoice.from} length={5}/>
-            <small className="text-gray-400 mt-4">To</small>
-            <ShortAddress address={invoice.to} length={5}/>
-          </div>
-          <div className="w-32 text-center align-middle mt-8 text-xl font-medium">
-            <p>Rs. {invoice.amount}</p>
-          </div>
-        </div>
-      </div>
-    )}
-  </div>
 }
 
 function HomeContent() {

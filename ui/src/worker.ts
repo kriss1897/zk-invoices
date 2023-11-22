@@ -7,7 +7,6 @@ import {
   Bool,
   Field,
   fetchAccount,
-  PrivateKey,
 } from "o1js";
 import { Invoice, Invoices, InvoicesWitness } from "../../contracts/build/src/";
 import type { MinaCache } from "./cache";
