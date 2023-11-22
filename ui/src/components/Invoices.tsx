@@ -1,5 +1,7 @@
-import { QuerySnapshot, collection, getFirestore, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
+import { QuerySnapshot, collection, doc, getDoc, getFirestore, onSnapshot, orderBy, query, setDoc } from 'firebase/firestore';
+
+import { MerkleTree, PublicKey, UInt32, Bool, Field } from 'o1js';
 
 function ShortAddress({ address, length = 3 }: { address: string, length?: number }) {
   return <p>{address.slice(0, length)}...{address.slice(address.length - length)}</p>
@@ -8,6 +10,8 @@ function ShortAddress({ address, length = 3 }: { address: string, length?: numbe
 export default function Invoices() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [tree, setTree] = useState<any>();
+  const [treeRoot, setTreeRoot] = useState<string>('');
+  const [localTreeRoot, setLocalTreeRoot] = useState<string>('');
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -16,8 +20,8 @@ export default function Invoices() {
       return;
     }
 
-    const o1js = import('o1js');
     const contracts =  import('../../../contracts/build/src');
+    const treeModule = import('../../../contracts/build/src/tree');
     const db = getFirestore();
 
     function formatInvoicesSnapshot(snap: QuerySnapshot) {
@@ -25,13 +29,44 @@ export default function Invoices() {
     };
 
     async function createInvoicesTree(invoices: any[]) {
-      const { MerkleTree, PublicKey, UInt32, Bool, Field } = await o1js;
+      const { PersistentMerkleTree } = await treeModule;
       const { Invoice } = await contracts;
-      const tree = new MerkleTree(32);
 
-      const emptyRoot = tree.getRoot();
+      class FirebaseStore {
+        private nodes: Record<number, Record<string, Field>> = {};
 
-      console.log(emptyRoot.toString());
+        /**
+         * Returns a node which lives at a given index and level.
+         * @param level Level of the node.
+         * @param index Index of the node.
+         * @returns The data of the node.
+         */
+        async getNode(level: number, index: bigint, _default: Field): Promise<Field> {
+          const node = await getDoc(doc(db, `tree/${level}:${index.toString()}`));
+
+          if (node.exists()) {
+            return Field.from(node.get('data'));
+          }
+
+          return _default;
+        }
+      
+        // TODO: this allows to set a node at an index larger than the size. OK?
+        async setNode(level: number, index: bigint, value: Field) {
+          await setDoc(
+            doc(db, `tree/${level}:${index.toString()}`),
+            { data: value.toString() }
+          );
+
+          return (this.nodes[level] ??= {})[index.toString()] = value;
+        }
+      }
+
+      const store = new FirebaseStore();
+      const tree = new PersistentMerkleTree(32, store);
+      const localTree = new MerkleTree(32);
+
+      const emptyRoot = await tree.getRoot();
   
       invoices.forEach((_invoice, index) => {
         const invoice = new Invoice({
@@ -44,7 +79,10 @@ export default function Invoices() {
         })
     
         tree.setLeaf(BigInt(index), invoice.hash())
+        localTree.setLeaf(BigInt(index), invoice.hash());
       });
+
+      setLocalTreeRoot(localTree.getRoot().toString());
     
       return tree;
     }
@@ -60,9 +98,16 @@ export default function Invoices() {
     );
   }, []);
 
+  useEffect(() => {
+    if (!tree) { return; }
+
+    tree.getRoot().then((root: any) => setTreeRoot(root.toString()));
+  }, [tree]);
+
   return <div className="space-y-4 max-w-2xl mx-auto">
     <h2 className="text-2xl">Invoices</h2>
-    <small>Root: {tree?.getRoot().toString()}</small>
+    <small className="block">Local Tree Root: {localTreeRoot}</small>
+    <small className="block">Persistent Root: {treeRoot}</small>
     { invoices.map((invoice, idx) => <div className="shadow-lg p-2 rounded-lg bg-white" key={`invoice:${invoice.id}`}>
         <div className="flex flex-row">
           <div className="grow">
