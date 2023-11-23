@@ -11,7 +11,6 @@ export default function Invoices() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [tree, setTree] = useState<any>();
   const [treeRoot, setTreeRoot] = useState<string>('');
-  const [localTreeRoot, setLocalTreeRoot] = useState<string>('');
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -64,9 +63,6 @@ export default function Invoices() {
 
       const store = new FirebaseStore();
       const tree = new PersistentMerkleTree(32, store);
-      const localTree = new MerkleTree(32);
-
-      const emptyRoot = await tree.getRoot();
   
       invoices.forEach((_invoice, index) => {
         const invoice = new Invoice({
@@ -79,11 +75,8 @@ export default function Invoices() {
         })
     
         tree.setLeaf(BigInt(index), invoice.hash())
-        localTree.setLeaf(BigInt(index), invoice.hash());
       });
 
-      setLocalTreeRoot(localTree.getRoot().toString());
-    
       return tree;
     }
 
@@ -105,8 +98,6 @@ export default function Invoices() {
   }, [tree]);
 
   return <div className="space-y-4 max-w-2xl mx-auto">
-    <h2 className="text-2xl">Invoices</h2>
-    <small className="block">Local Tree Root: {localTreeRoot}</small>
     <small className="block">Persistent Root: {treeRoot}</small>
     { invoices.map((invoice, idx) => <div className="shadow-lg p-2 rounded-lg bg-white" key={`invoice:${invoice.id}`}>
         <div className="flex flex-row">

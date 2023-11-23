@@ -2,6 +2,9 @@ import '@/styles/globals.css'
 import type { AppProps } from 'next/app'
 
 import { initializeApp } from "firebase/app";
+import dynamic from 'next/dynamic';
+import NiceModal from '@ebay/nice-modal-react';
+import InvoiceModal from '@/components/NewInvoiceModal';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FB_API_KEY,
@@ -15,6 +18,20 @@ const firebaseConfig = {
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
 
+NiceModal.register('create-invoice-modal', InvoiceModal);
+
+const Toaster = dynamic(
+  () => import("react-hot-toast").then((c) => c.Toaster),
+  {
+    ssr: false,
+  }
+);
+
 export default function App({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />
+  return <>
+    <NiceModal.Provider>
+      <Toaster position='top-right' />
+      <Component {...pageProps} />
+    </NiceModal.Provider>
+  </>
 }
