@@ -1,9 +1,13 @@
 import Head from "next/head";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { addDoc, collection, getFirestore } from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+
 import Invoices from "@/components/Invoices";
 import toast from "react-hot-toast";
 import { useModal } from "@ebay/nice-modal-react";
+import UserContext from "@/contexts/UserContext";
+import Link from "next/link";
 
 function HomeContent() {
   const _workerRef = useRef<Worker>();
@@ -13,7 +17,7 @@ function HomeContent() {
   const [status, setStatus] = useState<any>(null);
   const [account, setAccount] = useState<any>(null);
   const [toastId, setToastId] = useState<string>("");
-  const modal = useModal('create-invoice-modal');
+  const modal = useModal("create-invoice-modal");
 
   useEffect(() => {
     const worker = new Worker(new URL("../worker.ts", import.meta.url));
@@ -171,10 +175,27 @@ function HomeContent() {
 }
 
 export default function Home() {
+  const user = useContext(UserContext);
+
+  if (!user) {
+    return (
+      <div className="max-w-md mx-auto mt-14">
+        <Link
+          className="px-4 mx-auto block py-2 rounded-lg shadow-sm hover:shadow-xl text-center bg-slate-900 text-white"
+          href='/login'
+        >
+          Click to Login
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="max-w-2xl my-8 mx-auto space-y-4">
-        <h1 className="text-3xl font-medium"><span className="text-blue-950">zk</span>Invoices</h1>
+        <h1 className="text-3xl font-medium">
+          <span className="text-blue-950">zk</span>Invoices
+        </h1>
       </div>
       <HomeContent />
       <Invoices />
