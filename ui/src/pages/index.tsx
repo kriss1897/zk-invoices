@@ -18,6 +18,7 @@ function HomeContent() {
   const [account, setAccount] = useState<any>(null);
   const [toastId, setToastId] = useState<string>("");
   const modal = useModal("create-invoice-modal");
+  const [isWalletInstalled, setIsWalletInstalled] = useState(false);
 
   useEffect(() => {
     const worker = new Worker(new URL("../worker.ts", import.meta.url));
@@ -45,6 +46,10 @@ function HomeContent() {
     };
 
     loadAccounts().then(setAccount);
+  }, []);
+
+  useEffect(() => {
+    (window as any).mina && setIsWalletInstalled(true);
   }, []);
 
   useEffect(() => {
@@ -129,8 +134,8 @@ function HomeContent() {
     }
   }
 
-  if (loading) {
-    return <></>;
+  async function openCreateModal() {
+    modal.show().then(console.log).catch(console.log);
   }
 
   return (
@@ -142,8 +147,8 @@ function HomeContent() {
       </Head>
       <div className="max-w-2xl my-8 p-4 mx-auto space-y-4 text-center">
         <div>
-          {(window as any).mina && <p>Connected Account: {account}</p>}
-          {!(window as any).mina && (
+          {isWalletInstalled && <p>Connected Account: {account}</p>}
+          {!isWalletInstalled && (
             <a
               className="w-full block py-2 bg-yellow-400 shadow-lg text-yellow-900 rounded-md"
               href="https://www.aurowallet.com/"
@@ -155,7 +160,7 @@ function HomeContent() {
         <div className="space-x-2 flex flex-row">
           <button
             className="grow basis-2 py-2 bg-white text-slate-800 border rounded-md"
-            onClick={() => modal.show().then(console.log)}
+            onClick={() => openCreateModal()}
           >
             Create New
           </button>

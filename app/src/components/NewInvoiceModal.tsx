@@ -1,12 +1,12 @@
-import { Fragment, useEffect, useState } from "react";
-import { Transition, Dialog, Switch } from "@headlessui/react";
+import { Fragment } from "react";
+import { Transition, Dialog } from "@headlessui/react";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import InvoiceForm from "./InvoiceForm";
 
 const InvoiceModal = NiceModal.create(() => {
   const modal = useModal();
 
-  function handleCreate(invoice: any) {
+  function handleCreate(invoice: unknown) {
     console.log('x');
 
     modal.resolveHide({ invoice });
