@@ -4,6 +4,7 @@ import { QuerySnapshot, collection, doc, getDoc, getFirestore, onSnapshot, order
 import { PublicKey, UInt32, Bool, Field } from 'o1js';
 
 import { Invoice } from '../../../contracts/build/src/Invoices';
+import { getAuth } from 'firebase/auth';
 
 const treeModule = import('../../../contracts/build/src/tree');
 
@@ -101,7 +102,13 @@ export default function Invoices() {
 
   return <div className="space-y-4 max-w-2xl mx-auto">
     <small className="block">Persistent Root: {treeRoot}</small>
-    { invoices.map((invoice, idx) => <div className="shadow-lg p-2 rounded-lg bg-white" key={`invoice:${invoice.id}`}>
+    <button
+        className="px-4 mx-auto block py-2 rounded-lg shadow-sm hover:shadow-xl text-center bg-black text-white"
+        onClick={() => getAuth().signOut()}
+      >
+        Signout
+      </button>
+    { invoices.map((invoice) => <div className="shadow-lg p-2 rounded-lg bg-white" key={`invoice:${invoice.id}`}>
         <div className="flex flex-row">
           <div className="grow">
             <small className="text-gray-400 mt-4">From</small>

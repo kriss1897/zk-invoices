@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import NiceModal from '@ebay/nice-modal-react';
 import InvoiceModal from './components/NewInvoiceModal';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { User, getAuth, onAuthStateChanged } from 'firebase/auth';
 import UserContext from './context/UserContext';
 import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
