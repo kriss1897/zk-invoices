@@ -27,6 +27,10 @@ app.use(morgan('tiny'))
 // Apply routes before error handling
 app.use('/', root)
 
+app.post('/login', (req: any, res: any) => {
+    return res.json({ hello: 'world' });
+});
+
 // Apply error handling last
 app.use(fourOhFour)
 app.use(errorHandler)
