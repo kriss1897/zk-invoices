@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
-import { QuerySnapshot, collection, doc, getDoc, getFirestore, onSnapshot, orderBy, query, setDoc } from 'firebase/firestore';
+import { useContext, useEffect, useState } from 'react';
+import { QuerySnapshot, collection, doc, getDoc, getFirestore, onSnapshot, orderBy, query, setDoc, where } from 'firebase/firestore';
 
 import { PublicKey, UInt32, Bool, Field } from 'o1js';
 
 import { Invoice } from '../../../contracts/build/src/Invoices';
 import { getAuth } from 'firebase/auth';
+import UserContext from '../context/UserContext';
 
 const treeModule = import('../../../contracts/build/src/tree');
 
@@ -16,10 +17,17 @@ export default function Invoices() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [tree, setTree] = useState<any>();
   const [treeRoot, setTreeRoot] = useState<string>('');
+  const user = useContext(UserContext);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
       console.log('window object not present');
+
+      return;
+    }
+
+    if (!user) {
+      console.log('User not found');
 
       return;
     }
@@ -84,7 +92,7 @@ export default function Invoices() {
     }
 
     onSnapshot(
-      query(collection(db, 'invoices'), orderBy('createdAt', 'desc')),
+      query(collection(db, 'invoices'), where('from', '==', user.uid), orderBy('createdAt', 'desc')),
       (snap) => {
         const invoices = formatInvoicesSnapshot(snap);
         
