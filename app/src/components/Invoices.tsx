@@ -3,7 +3,7 @@ import { QuerySnapshot, collection, doc, getDoc, getFirestore, onSnapshot, order
 
 import { PublicKey, UInt32, Bool, Field } from 'o1js';
 
-import { Invoice } from '../../../contracts/build/src/Invoices';
+import { Invoice } from '../../../contracts/src/InvoicesModels';
 import { getAuth } from 'firebase/auth';
 import UserContext from '../context/UserContext';
 
@@ -17,7 +17,7 @@ export default function Invoices() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [tree, setTree] = useState<any>();
   const [treeRoot, setTreeRoot] = useState<string>('');
-  const user = useContext(UserContext);
+  const { user } = useContext(UserContext);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -77,7 +77,7 @@ export default function Invoices() {
   
       invoices.forEach((_invoice, index) => {
         const invoice = new Invoice({
-          from: PublicKey.fromBase58(_invoice.from),
+          from: PublicKey.fromBase58(user?.uid as string),
           to: PublicKey.fromBase58(_invoice.to),
           amount: UInt32.from(_invoice.amount),
           settled: Bool(false),

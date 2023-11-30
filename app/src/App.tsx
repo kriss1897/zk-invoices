@@ -1,12 +1,11 @@
 import { initializeApp } from "firebase/app";
-import NiceModal from '@ebay/nice-modal-react';
-import InvoiceModal from './components/NewInvoiceModal';
-import { User, getAuth, onAuthStateChanged } from 'firebase/auth';
-import UserContext from './context/UserContext';
-import { useEffect, useState } from "react";
+import NiceModal from "@ebay/nice-modal-react";
+import InvoiceModal from "./components/NewInvoiceModal";
+import UserContext, { UserProvider } from "./context/UserContext";
 import { Toaster } from "react-hot-toast";
 import Invoices from "./components/Invoices";
 import Login from "./pages/login";
+import { useContext } from "react";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FB_API_KEY,
@@ -14,34 +13,39 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_FB_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FB_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FB_SENDER_ID,
-  appId: import.meta.env.VITE_FB_APP_ID
+  appId: import.meta.env.VITE_FB_APP_ID,
 };
 
 // Initialize Firebase
-export const app = initializeApp(firebaseConfig);
-const auth = getAuth();
+initializeApp(firebaseConfig);
 
-NiceModal.register('create-invoice-modal', InvoiceModal);
+NiceModal.register("create-invoice-modal", InvoiceModal);
 
 function App() {
-  const [user, setUser] = useState<User|null>(null);
+  const { user, loading } = useContext(UserContext);
 
-  useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
-      setUser(user);
-    });
-  }, []);
-
-  if (!user) {
-    return <Login />
+  if (loading) {
+    return <p>Loading auth information</p>;
   }
 
-  return <UserContext.Provider value={user}>
-    <NiceModal.Provider>
-      <Toaster position='top-right' />
+  if (!user) {
+    return <Login />;
+  }
+
+  return (
+    <>
       <Invoices />
-    </NiceModal.Provider>
-  </UserContext.Provider>
+    </>
+  );
 }
 
-export default App
+export default function AppContainer() {
+  return (
+    <UserProvider>
+      <NiceModal.Provider>
+        <Toaster position="top-right" />
+        <App />
+      </NiceModal.Provider>
+    </UserProvider>
+  );
+}
