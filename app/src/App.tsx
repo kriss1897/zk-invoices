@@ -1,11 +1,11 @@
-import { initializeApp } from "firebase/app";
 import NiceModal from "@ebay/nice-modal-react";
-import InvoiceModal from "./components/NewInvoiceModal";
-import UserContext, { UserProvider } from "./context/UserContext";
+import { initializeApp } from "firebase/app";
 import { Toaster } from "react-hot-toast";
-import Invoices from "./components/Invoices";
-import Login from "./pages/login";
-import { useContext } from "react";
+
+import { UserProvider } from "./context/UserContext";
+import Router from "./Router";
+
+import InvoiceModal from "./components/NewInvoiceModal";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FB_API_KEY,
@@ -21,30 +21,12 @@ initializeApp(firebaseConfig);
 
 NiceModal.register("create-invoice-modal", InvoiceModal);
 
-function App() {
-  const { user, loading } = useContext(UserContext);
-
-  if (loading) {
-    return <p>Loading auth information</p>;
-  }
-
-  if (!user) {
-    return <Login />;
-  }
-
-  return (
-    <>
-      <Invoices />
-    </>
-  );
-}
-
 export default function AppContainer() {
   return (
     <UserProvider>
       <NiceModal.Provider>
         <Toaster position="top-right" />
-        <App />
+        <Router />
       </NiceModal.Provider>
     </UserProvider>
   );

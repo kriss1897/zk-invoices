@@ -60,7 +60,7 @@ export default function Login() {
   }
 
   if (user) {
-    window.location.pathname = "/";
+    // window.location.pathname = "/";
 
     return <></>;
   }

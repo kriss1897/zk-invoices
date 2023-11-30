@@ -1,16 +1,53 @@
 import { useContext, useEffect, useState } from 'react';
-import { QuerySnapshot, collection, doc, getDoc, getFirestore, onSnapshot, orderBy, query, setDoc, where } from 'firebase/firestore';
+import { Firestore, QuerySnapshot, collection, doc, getDoc, getFirestore, onSnapshot, orderBy, query, setDoc, where } from 'firebase/firestore';
 
 import { PublicKey, UInt32, Bool, Field } from 'o1js';
 
 import { Invoice } from '../../../contracts/src/InvoicesModels';
-import { getAuth } from 'firebase/auth';
+import { User, getAuth } from 'firebase/auth';
 import UserContext from '../context/UserContext';
 
 const treeModule = import('../../../contracts/build/src/tree');
 
 function ShortAddress({ address, length = 3 }: { address: string, length?: number }) {
   return <p>{address.slice(0, length)}...{address.slice(address.length - length)}</p>
+}
+
+class FirebaseStore {
+  private nodes: Record<number, Record<string, Field>> = {};
+  private db: Firestore;
+
+  constructor() {
+    this.db = getFirestore();
+  }
+
+  /**
+   * Returns a node which lives at a given index and level.
+   * @param level Level of the node.
+   * @param index Index of the node.
+   * @returns The data of the node.
+   */
+  async getNode(level: number, index: bigint, _default: Field): Promise<Field> {
+
+
+    const node = await getDoc(doc(this.db, `tree/${level}:${index.toString()}`));
+
+    if (node.exists()) {
+      return Field.from(node.get('data'));
+    }
+
+    return _default;
+  }
+
+  // TODO: this allows to set a node at an index larger than the size. OK?
+  async setNode(level: number, index: bigint, value: Field) {
+    await setDoc(
+      doc(this.db, `tree/${level}:${index.toString()}`),
+      { data: value.toString() }
+    );
+
+    return (this.nodes[level] ??= {})[index.toString()] = value;
+  }
 }
 
 export default function Invoices() {
@@ -20,19 +57,8 @@ export default function Invoices() {
   const { user } = useContext(UserContext);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      console.log('window object not present');
-
-      return;
-    }
-
-    if (!user) {
-      console.log('User not found');
-
-      return;
-    }
-
     const db = getFirestore();
+    const userId = (user as User).uid;
 
     function formatInvoicesSnapshot(snap: QuerySnapshot) {
       return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
@@ -40,37 +66,6 @@ export default function Invoices() {
 
     async function createInvoicesTree(invoices: any[]) {
       const { PersistentMerkleTree } = await treeModule;
-      // const { Invoice } = await contracts;
-
-      class FirebaseStore {
-        private nodes: Record<number, Record<string, Field>> = {};
-
-        /**
-         * Returns a node which lives at a given index and level.
-         * @param level Level of the node.
-         * @param index Index of the node.
-         * @returns The data of the node.
-         */
-        async getNode(level: number, index: bigint, _default: Field): Promise<Field> {
-          const node = await getDoc(doc(db, `tree/${level}:${index.toString()}`));
-
-          if (node.exists()) {
-            return Field.from(node.get('data'));
-          }
-
-          return _default;
-        }
-      
-        // TODO: this allows to set a node at an index larger than the size. OK?
-        async setNode(level: number, index: bigint, value: Field) {
-          await setDoc(
-            doc(db, `tree/${level}:${index.toString()}`),
-            { data: value.toString() }
-          );
-
-          return (this.nodes[level] ??= {})[index.toString()] = value;
-        }
-      }
 
       const store = new FirebaseStore();
       const tree = new PersistentMerkleTree(32, store);
@@ -92,7 +87,7 @@ export default function Invoices() {
     }
 
     onSnapshot(
-      query(collection(db, 'invoices'), where('from', '==', user.uid), orderBy('createdAt', 'desc')),
+      query(collection(db, 'invoices'), where('from', '==', userId), orderBy('createdAt', 'desc')),
       (snap) => {
         const invoices = formatInvoicesSnapshot(snap);
         
