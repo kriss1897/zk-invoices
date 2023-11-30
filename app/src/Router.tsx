@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 
 import Layout from "./pages/Layout";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import UserContext from "./context/UserContext";
 import { Loader } from "./components/Loader";
 import Invoices from "./components/Invoices";
@@ -24,6 +24,10 @@ const router = (user: User | null) => createBrowserRouter(
 
 export default function Router () {
   const { user, loading } = useContext(UserContext);
+
+  useEffect(() => {
+    console.log(user);
+  }, [user]);
 
   if (loading) {
     return <Loader />

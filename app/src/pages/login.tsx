@@ -2,6 +2,7 @@ import UserContext from "../context/UserContext";
 import { getAuth, signInAnonymously, signInWithCustomToken, signInWithRedirect } from "firebase/auth";
 import { GoogleAuthProvider } from "firebase/auth";
 import { useContext } from "react";
+import { Loader } from "../components/Loader";
 
 function LoginWithMina() {
   async function authenticate() {
@@ -42,7 +43,7 @@ function LoginWithMina() {
 }
 
 export default function Login() {
-  const user = useContext(UserContext);
+  const { user, loading } = useContext(UserContext);
 
   function authenticate() {
     const provider = new GoogleAuthProvider();
@@ -59,10 +60,16 @@ export default function Login() {
     });
   }
 
-  if (user) {
-    // window.location.pathname = "/";
+  if (loading) {
+    return <Loader />;
+  }
 
-    return <></>;
+  if (user) {
+    console.log('user', user);
+
+    window.location.pathname = "/";
+
+    return <>Hi</>;
   }
 
   return (
