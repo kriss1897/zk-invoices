@@ -3,6 +3,7 @@ import { getAuth, signInAnonymously, signInWithCustomToken, signInWithRedirect }
 import { GoogleAuthProvider } from "firebase/auth";
 import { useContext } from "react";
 import { Loader } from "../components/Loader";
+import { Button } from "@/components/ui/button";
 
 function LoginWithMina() {
   async function authenticate() {
@@ -33,12 +34,9 @@ function LoginWithMina() {
   }
 
   return (
-    <button
-      className="px-4 mx-auto block py-2 rounded-lg shadow-sm hover:shadow-xl text-center bg-orange-100 text-orange-900"
-      onClick={authenticate}
-    >
+    <Button onClick={authenticate}>
       Login with Mina
-    </button>
+    </Button>
   );
 }
 
@@ -73,20 +71,20 @@ export default function Login() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-14 space-y-4">
-      <button
-        className="px-4 mx-auto block py-2 rounded-lg shadow-sm hover:shadow-xl text-center bg-black text-white"
+    <div className="max-w-md mx-auto mt-14 space-y-4 flex flex-col">
+      <LoginWithMina />
+      <Button
+        variant="secondary"
         onClick={authenticate}
       >
         Login with google
-      </button>
-      <button
-        className="px-4 mx-auto block py-2 rounded-lg shadow-sm hover:shadow-xl text-center bg-black text-white"
+      </Button>
+      <Button
+      variant="secondary"
         onClick={anonymousLogin}
       >
         Anonymous Login
-      </button>
-      <LoginWithMina />
+      </Button>
     </div>
   );
 }
