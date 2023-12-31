@@ -25,13 +25,13 @@ const files = [
   { name: "lagrange-basis-fp-4096", type: "string" },
   { name: "srs-fp-65536", type: "string" },
   { name: "srs-fq-32768", type: "string" },
-  { name: "step-pk-invoicesprovider-commit", type: "string" },
-  { name: "step-pk-invoicesprovider-createinvoice", type: "string" },
-  { name: "step-pk-invoicesprovider-increaselimit", type: "string" },
-  { name: "step-pk-invoicesprovider-mint", type: "string" },
-  { name: "step-pk-invoicesprovider-settleinvoice", type: "string" },
-  { name: "step-pk-invoicesprovider-upgrade", type: "string" },
-  { name: "wrap-pk-invoicesprovider", type: "string" },
+  { name: "step-vk-invoicesprovider-commit", type: "string" },
+  { name: "step-vk-invoicesprovider-createinvoice", type: "string" },
+  { name: "step-vk-invoicesprovider-increaselimit", type: "string" },
+  { name: "step-vk-invoicesprovider-mint", type: "string" },
+  { name: "step-vk-invoicesprovider-settleinvoice", type: "string" },
+  { name: "step-vk-invoicesprovider-upgrade", type: "string" },
+  { name: "wrap-vk-invoicesprovider", type: "string" },
 ];
 
 function fetchFiles() {
@@ -58,6 +58,8 @@ function fetchFiles() {
 const FileSystem = (files: any, onAccess: any): MinaCache => ({
   read({ persistentId, uniqueId, dataType }: any) {
     // read current uniqueId, return data if it matches
+    console.log(Object.keys(files));
+
     if (!files[persistentId]) {
       console.log("read");
       console.log({ persistentId, uniqueId, dataType });
