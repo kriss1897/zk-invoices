@@ -8,9 +8,8 @@ const worker = new MyWorker();
 
 export default function Layout () {
   useEffect(() => {
-    const toastId = toast.loading('Loading zkApp');
     worker.onmessage = (event: MessageEvent) => {
-      toast(event.data.data, { id: toastId, });
+      toast.loading(event.data.data, { id: 'zkapp-loader-toast' });
     };
   }, []);
 
