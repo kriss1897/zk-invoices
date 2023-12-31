@@ -12,6 +12,7 @@ import { initializeApp, applicationDefault } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 
 import Client from 'mina-signer';
+import path from 'path';
 const client = new Client({ network: 'testnet' });
 
 const app = express()
@@ -32,6 +33,8 @@ app.use(morgan('tiny'))
 
 // Apply routes before error handling
 app.use('/', root)
+app.use('/cache/invoices', express.static(path.join(__dirname, '../../cache/invoicescache')))
+app.use('/cache/provider', express.static(path.join(__dirname, '../../cache/providercache')))
 
 
 const loginHandler: RequestHandler = async (req, res) => {
