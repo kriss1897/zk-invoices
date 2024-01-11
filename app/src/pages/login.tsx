@@ -15,7 +15,7 @@ function LoginWithMina() {
       const sign = await (window as any).mina.signMessage({
         message: "login to invoices",
       });
-      
+
       const data = await fetch('http://localhost:3000/login', {
         method: "POST",
         body: JSON.stringify(sign),

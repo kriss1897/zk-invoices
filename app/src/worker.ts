@@ -8,7 +8,7 @@ import {
 } from "o1js";
 import {
   // Invoice,
-  // Invoices,
+  Invoices,
   InvoicesProvider,
   // InvoicesWitness,
 } from "../../contracts/build/src/";
@@ -18,30 +18,44 @@ const zkAppAddress = "B62qmUQ7bpqVr4P3gj7RbmNmEdnA892NqwSJcmxgN6xMDVamiXQgAy8";
 // const minaUrl = "https://proxy.berkeley.minaexplorer.com/graphql";
 // const archiveUrl = "https://archive.berkeley.minaexplorer.com";
 
-const minaUrl = 'https://api.minascan.io/node/berkeley/v1/graphql';
-const archiveUrl = 'https://api.minascan.io/archive/berkeley/v1/graphql/';
-const files = [
-  { name: "lagrange-basis-fp-2048", type: "string" },
-  { name: "lagrange-basis-fp-4096", type: "string" },
-  { name: "srs-fp-65536", type: "string" },
-  { name: "srs-fq-32768", type: "string" },
-  { name: "step-vk-invoicesprovider-commit", type: "string" },
-  { name: "step-vk-invoicesprovider-createinvoice", type: "string" },
-  { name: "step-vk-invoicesprovider-increaselimit", type: "string" },
-  { name: "step-vk-invoicesprovider-mint", type: "string" },
-  { name: "step-vk-invoicesprovider-settleinvoice", type: "string" },
-  { name: "step-vk-invoicesprovider-upgrade", type: "string" },
-  { name: "wrap-vk-invoicesprovider", type: "string" },
-];
+const minaUrl = "https://api.minascan.io/node/berkeley/v1/graphql";
+const archiveUrl = "https://api.minascan.io/archive/berkeley/v1/graphql/";
+const files: Record<string, Record<string, string>[]> = {
+  provider: [
+    { name: "lagrange-basis-fp-2048", type: "string" },
+    { name: "lagrange-basis-fp-4096", type: "string" },
+    { name: "srs-fp-65536", type: "string" },
+    { name: "srs-fq-32768", type: "string" },
+    { name: "step-vk-invoicesprovider-commit", type: "string" },
+    { name: "step-vk-invoicesprovider-createinvoice", type: "string" },
+    { name: "step-vk-invoicesprovider-increaselimit", type: "string" },
+    { name: "step-vk-invoicesprovider-mint", type: "string" },
+    { name: "step-vk-invoicesprovider-settleinvoice", type: "string" },
+    { name: "step-vk-invoicesprovider-upgrade", type: "string" },
+    { name: "wrap-vk-invoicesprovider", type: "string" },
+  ],
+  invoices: [
+    { type: "string", name: "lagrange-basis-fp-1024" },
+    { type: "string", name: "lagrange-basis-fp-65536" },
+    { type: "string", name: "srs-fp-65536" },
+    { type: "string", name: "srs-fq-32768" },
+    { type: "string", name: "step-vk-invoices-commit" },
+    { type: "string", name: "step-vk-invoices-createinvoice" },
+    { type: "string", name: "step-vk-invoices-increaselimit" },
+    { type: "string", name: "step-vk-invoices-init" },
+    { type: "string", name: "step-vk-invoices-settleinvoice" },
+    { type: "string", name: "wrap-vk-invoices" },
+  ],
+};
 
-function fetchFiles() {
+function fetchFiles(type: string) {
   return Promise.all(
-    files.map((file) => {
+    files[type].map((file) => {
       return Promise.all([
-        fetch(`http://localhost:3000/cache/provider/${file.name}.header`).then(
+        fetch(`http://localhost:3000/cache/${type}/${file.name}.header`).then(
           (res) => res.text()
         ),
-        fetch(`http://localhost:3000/cache/provider/${file.name}`).then((res) =>
+        fetch(`http://localhost:3000/cache/${type}/${file.name}`).then((res) =>
           res.text()
         ),
       ]).then(([header, data]) => ({ file, header, data }));
@@ -136,8 +150,8 @@ addEventListener("message", (event: MessageEvent) => {
     });
   }
 
-  if (action === "commit") {
-    commit().then((txn) => {
+  if (action === "mint") {
+    mint().then((txn) => {
       postMessage({
         type: "response",
         action: "transaction",
@@ -148,11 +162,9 @@ addEventListener("message", (event: MessageEvent) => {
 });
 
 postStatusUpdate({ message: "Loading cached zkApp files" });
-const cacheFiles = await fetchFiles();
-const cache = FileSystem(
-  cacheFiles,
-  ({ type, persistentId, uniqueId, dataType }: any) => {
-    console.log(uniqueId, dataType);
+const providerCacheFiles = await fetchFiles("provider");
+const cache = (files: any[]) => {
+  return FileSystem(files, ({ type, persistentId }: any) => {
     if (type === "hit") {
       postStatusUpdate({
         message: `Found ${persistentId} in pre-built binaries`,
@@ -162,20 +174,30 @@ const cache = FileSystem(
     if (type === "miss") {
       postStatusUpdate({ message: `Compiling ${persistentId}` });
     }
-  }
-);
+  });
+}
+  
 
 postStatusUpdate({ message: "Initiated zkApp compilation process" });
-await InvoicesProvider.compile({ cache });
+const invoicesCacheFiles = fetchFiles("invoices");
+await InvoicesProvider.compile({ cache: cache(providerCacheFiles) });
+postStatusUpdate({
+  message: `Now compiling invoices app`,
+});
+const invoicesVkGenerated = await Invoices.compile({
+  cache: cache(await invoicesCacheFiles),
+});
+console.log(invoicesVkGenerated);
 postMessage({
   type: "zkapp",
   action: "compiled",
 });
+console.log("compiled");
 postStatusUpdate({ message: "" });
 
 // const tree = new MerkleTree(32);
 
-async function commit() {
+async function mint() {
   // console.log("sending transaction");
   // await fetchAccount(
   //   { publicKey: zkAppAddress },
