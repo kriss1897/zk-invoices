@@ -74,8 +74,6 @@ class FirebaseStore {
 
 export default function Invoices() {
   const [invoices, setInvoices] = useState<any[]>([]);
-  const [tree, setTree] = useState<any>();
-  const [treeRoot, setTreeRoot] = useState<string>("");
   const { user } = useContext(UserContext);
 
   useEffect(() => {
@@ -84,28 +82,6 @@ export default function Invoices() {
 
     function formatInvoicesSnapshot(snap: QuerySnapshot) {
       return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    }
-
-    async function createInvoicesTree(invoices: any[]) {
-      const { PersistentMerkleTree } = await treeModule;
-
-      const store = new FirebaseStore();
-      const tree = new PersistentMerkleTree(32, store);
-
-      invoices.forEach((_invoice, index) => {
-        const invoice = new Invoice({
-          from: PublicKey.fromBase58(user?.uid as string),
-          to: PublicKey.fromBase58(_invoice.to),
-          amount: UInt32.from(_invoice.amount),
-          settled: Bool(false),
-          // TODO: Add metadata hash later
-          metadataHash: Field(0),
-        });
-
-        tree.setLeaf(BigInt(index), invoice.hash());
-      });
-
-      return tree;
     }
 
     onSnapshot(
@@ -117,19 +93,11 @@ export default function Invoices() {
       (snap) => {
         const invoices = formatInvoicesSnapshot(snap);
 
-        createInvoicesTree(invoices).then(setTree);
         setInvoices(invoices);
       }
     );
   }, []);
 
-  useEffect(() => {
-    if (!tree) {
-      return;
-    }
-
-    tree.getRoot().then((root: any) => setTreeRoot(root.toString()));
-  }, [tree]);
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
