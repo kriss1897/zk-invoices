@@ -1,26 +1,17 @@
 import { useContext, useEffect, useState } from "react";
 import {
-  Firestore,
   QuerySnapshot,
   collection,
-  doc,
-  getDoc,
   getFirestore,
   onSnapshot,
   orderBy,
   query,
-  setDoc,
   where,
 } from "firebase/firestore";
 
-import { PublicKey, UInt32, Bool, Field } from "o1js";
-
-import { Invoice } from "../../../contracts/src/InvoicesModels";
 import { User, getAuth } from "firebase/auth";
 import UserContext from "../context/UserContext";
 import { Button } from "@/components/ui/button";
-
-const treeModule = import("../../../contracts/build/src/tree");
 
 function ShortAddress({
   address,
@@ -34,42 +25,6 @@ function ShortAddress({
       {address.slice(0, length)}...{address.slice(address.length - length)}
     </p>
   );
-}
-
-class FirebaseStore {
-  private nodes: Record<number, Record<string, Field>> = {};
-  private db: Firestore;
-
-  constructor() {
-    this.db = getFirestore();
-  }
-
-  /**
-   * Returns a node which lives at a given index and level.
-   * @param level Level of the node.
-   * @param index Index of the node.
-   * @returns The data of the node.
-   */
-  async getNode(level: number, index: bigint, _default: Field): Promise<Field> {
-    const node = await getDoc(
-      doc(this.db, `tree/${level}:${index.toString()}`)
-    );
-
-    if (node.exists()) {
-      return Field.from(node.get("data"));
-    }
-
-    return _default;
-  }
-
-  // TODO: this allows to set a node at an index larger than the size. OK?
-  async setNode(level: number, index: bigint, value: Field) {
-    await setDoc(doc(this.db, `tree/${level}:${index.toString()}`), {
-      data: value.toString(),
-    });
-
-    return ((this.nodes[level] ??= {})[index.toString()] = value);
-  }
 }
 
 export default function Invoices() {
