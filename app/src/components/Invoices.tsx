@@ -10,12 +10,13 @@ import {
   where,
 } from "firebase/firestore";
 
-import { User, getAuth } from "firebase/auth";
+import { User } from "firebase/auth";
 import UserContext from "../context/UserContext";
 import { ShortAddress } from "../utils/common";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 type RawInvoice = {
   id: string;
@@ -66,14 +67,23 @@ export default function Invoices() {
   }, []);
 
   return (
-    <div className="space-y-4 max-w-2xl mx-auto">
-      <Button onClick={() => getAuth().signOut()}>Signout</Button>
+    <div className="space-y-4 max-w-2xl mx-auto mt-4">
+      <h2>Invoices</h2>
       <Tabs defaultValue="account" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="sent">Sent</TabsTrigger>
           <TabsTrigger value="received">Received</TabsTrigger>
         </TabsList>
         <TabsContent value="sent">
+        {sentInvoices.length === 0 && (
+            <Alert className="text-center space-y-4">
+              <AlertTitle>Send you first invoice today</AlertTitle>
+              <AlertDescription className="space-y-4">
+                <p className="block">You have not yet experienced the new age of provable invoices.</p>
+                <Button variant="outline" onClick={() => alert('Not Implemented')}>Send New Invoice</Button>
+              </AlertDescription>
+            </Alert>
+          )}
           {sentInvoices.map((invoice) => (
             <div
               className="shadow-lg p-2 rounded-lg bg-white"
@@ -92,6 +102,14 @@ export default function Invoices() {
           ))}
         </TabsContent>
         <TabsContent value="received">
+          {receivedInvoices.length === 0 && (
+            <Alert className="text-center space-y-4">
+              <AlertTitle>Empty!</AlertTitle>
+              <AlertDescription>
+                You have not received any invoices yet.
+              </AlertDescription>
+            </Alert>
+          )}
           {receivedInvoices.map((invoice) => (
             <div
               className="shadow-lg p-2 rounded-lg bg-white"
