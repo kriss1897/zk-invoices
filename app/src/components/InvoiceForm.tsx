@@ -1,42 +1,36 @@
-import { PrivateKey } from "o1js";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-function useRandomInvoice() {
-  const [invoice, setInvoice] = useState({
-    from: PrivateKey.random().toPublicKey().toBase58().toString(),
-    to: PrivateKey.random().toPublicKey().toBase58().toString(),
-    amount: Math.floor(Math.random() * 1000),
-  });
-
-  function regenerate() {
-    setInvoice({
-      from: PrivateKey.random().toPublicKey().toBase58().toString(),
-      to: PrivateKey.random().toPublicKey().toBase58().toString(),
-      amount: Math.floor(Math.random() * 1000),
-    });
-  }
-
-  return { invoice, regenerate };
-}
+type RawInvoice = {
+  id: string;
+  from: string;
+  to: string;
+  amount: number;
+};
 
 export default function InvoiceForm({
   create,
+  initialValue
 }: {
   create: (data: any) => void;
+  initialValue: RawInvoice
 }) {
-  const { invoice, regenerate } = useRandomInvoice();
+  const [invoice, setInvoice] = useState(initialValue);
+
+  function handleChange(name: any, value: any) {
+    setInvoice({ [name]: value, ...invoice })
+  }
+
+  useEffect(() => {
+    setInvoice(initialValue);
+  }, [initialValue]);
 
   return (
-    <div>
-      <h2 className="text-2xl mb-4">Invoices zkApp</h2>
-      <small className="text-gray-400">
-        For the purpose of this PoC, all the invoice data is generated randomly
-      </small>
-      <div>
+    <div className="space-y-2">
         <div className="space-y-2 text-left">
           <label>From</label>
           <input
             id="invoice-from"
+            name="from"
             className="w-full border bg-gray-50 rounded-md p-2"
             readOnly
             value={invoice.from}
@@ -44,24 +38,21 @@ export default function InvoiceForm({
           <label>To</label>
           <input
             id="invoice-to"
+            name="to"
             className="w-full border bg-gray-50 rounded-md p-2"
-            readOnly
             value={invoice.to}
+            onChange={(e) => handleChange('to', e.target.value)}
           />
           <label>Amount</label>
           <input
             id="invoice-amount"
+            type="number"
+            name="amount"
             className="w-full border bg-gray-50 rounded-md p-2"
-            readOnly
             value={invoice.amount}
+            onChange={(e) => handleChange('amount', Number(e.target.value))}
           />
         </div>
-        <button
-          className="w-full py-2 bg-white text-slate-800 border rounded-md"
-          onClick={regenerate}
-        >
-          Randomize
-        </button>
         <button
           className="w-full py-2 bg-slate-800 text-white font-bold rounded-md"
           onClick={() => create(invoice)}
@@ -69,6 +60,5 @@ export default function InvoiceForm({
           Create Invoice
         </button>
       </div>
-    </div>
   );
 }

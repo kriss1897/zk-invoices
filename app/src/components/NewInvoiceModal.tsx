@@ -2,9 +2,20 @@ import { Fragment } from "react";
 import { Transition, Dialog } from "@headlessui/react";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import InvoiceForm from "./InvoiceForm";
+import { useRandomInvoice } from "../utils/useRandomInvoice";
+import { Button } from "@/components/ui/button";
+import { RotateCcw } from "lucide-react";
+
+type RawInvoice = {
+  id: string;
+  from: string;
+  to: string;
+  amount: number;
+};
 
 const InvoiceModal = NiceModal.create(() => {
   const modal = useModal();
+  const { invoice, regenerate } = useRandomInvoice(modal.args?.from as string);
 
   function handleCreate(invoice: unknown) {
     console.log('x');
@@ -41,15 +52,18 @@ const InvoiceModal = NiceModal.create(() => {
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white px-6 py-8  text-left align-middle shadow-xl transition-all">
                 <Dialog.Title
                   as="h2"
-                  className="text-2xl pl-4 font-medium leading-6 text-gray-900 text-center"
+                  className="text-2xl font-medium text-gray-900"
                 >
-                  { modal.args ? 'Update board' : 'Create new board' }
+                  Send Invoice
+                  <Button variant="outline" className="float-right" onClick={regenerate}>
+                    <RotateCcw />
+                  </Button>
                 </Dialog.Title>
                 <Dialog.Description
                   as="p"
                   className="text-center px-8 mt-4 text-gray-400"
                 ></Dialog.Description>
-                <InvoiceForm create={handleCreate} />
+                <InvoiceForm create={handleCreate} initialValue={invoice as RawInvoice} />
               </Dialog.Panel>
             </Transition.Child>
           </div>

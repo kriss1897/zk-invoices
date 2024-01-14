@@ -17,6 +17,7 @@ import { ShortAddress } from "../utils/common";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { useModal } from "@ebay/nice-modal-react";
 
 type RawInvoice = {
   id: string;
@@ -26,6 +27,7 @@ type RawInvoice = {
 };
 
 export default function Invoices() {
+  const createInvoiceModal = useModal('create-invoice-modal');
   const [sentInvoices, setSentInvoices] = useState<any[]>([]);
   const [receivedInvoices, setReceivedInvoices] = useState<any[]>([]);
   const { user } = useContext(UserContext);
@@ -69,7 +71,7 @@ export default function Invoices() {
   return (
     <div className="space-y-4 max-w-2xl mx-auto mt-4">
       <h2>Invoices</h2>
-      <Tabs defaultValue="account" className="w-full">
+      <Tabs defaultValue="sent" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="sent">Sent</TabsTrigger>
           <TabsTrigger value="received">Received</TabsTrigger>
@@ -80,7 +82,7 @@ export default function Invoices() {
               <AlertTitle>Send you first invoice today</AlertTitle>
               <AlertDescription className="space-y-4">
                 <p className="block">You have not yet experienced the new age of provable invoices.</p>
-                <Button variant="outline" onClick={() => alert('Not Implemented')}>Send New Invoice</Button>
+                <Button variant="outline" onClick={() => createInvoiceModal.show({ from: user?.uid })}>Send New Invoice</Button>
               </AlertDescription>
             </Alert>
           )}
