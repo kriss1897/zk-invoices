@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
-
-type RawInvoice = {
-  id: string;
-  from: string;
-  to: string;
-  amount: number;
-};
+import { RawInvoice } from "../services/InvoiceService";
 
 export default function InvoiceForm({
   create,

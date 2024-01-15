@@ -5,22 +5,17 @@ import InvoiceForm from "./InvoiceForm";
 import { useRandomInvoice } from "../utils/useRandomInvoice";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-type RawInvoice = {
-  id: string;
-  from: string;
-  to: string;
-  amount: number;
-};
+import { RawInvoice } from "../services/InvoiceService";
 
 const InvoiceModal = NiceModal.create(() => {
   const modal = useModal();
   const { invoice, regenerate } = useRandomInvoice(modal.args?.from as string);
 
   function handleCreate(invoice: unknown) {
-    console.log('x');
-
-    modal.resolveHide({ invoice });
+    modal.resolve({ invoice });
+    modal.remove();
   }
 
   return (
@@ -63,6 +58,9 @@ const InvoiceModal = NiceModal.create(() => {
                   as="p"
                   className="text-center px-8 mt-4 text-gray-400"
                 ></Dialog.Description>
+                <Alert>
+                  <AlertDescription>For the purpose this demo, these values are randomly generated</AlertDescription>
+                </Alert>
                 <InvoiceForm create={handleCreate} initialValue={invoice as RawInvoice} />
               </Dialog.Panel>
             </Transition.Child>

@@ -19,15 +19,30 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useModal } from "@ebay/nice-modal-react";
 
-type RawInvoice = {
-  id: string;
-  from: string;
-  to: string;
-  amount: number;
-};
+import { RawInvoice, createInvoice } from "../services/InvoiceService";
+
+function SentInvoiceCard({ invoice }: { invoice: RawInvoice }) {
+  return (
+    <div
+      className="shadow-lg p-2 rounded-lg bg-white"
+      key={`invoice:${invoice.id}`}
+    >
+      <small>{invoice.createdAt.toDate().toDateString()}</small>
+      <div className="flex flex-row">
+        <div className="grow">
+          <small className="text-gray-400 mt-4">To</small>
+          <ShortAddress address={invoice.to} length={10} />
+        </div>
+        <div className="w-32 text-center align-middle text-xl font-medium">
+          <p>Rs. {invoice.amount}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Invoices() {
-  const createInvoiceModal = useModal('create-invoice-modal');
+  const createInvoiceModal = useModal("create-invoice-modal");
   const [sentInvoices, setSentInvoices] = useState<any[]>([]);
   const [receivedInvoices, setReceivedInvoices] = useState<any[]>([]);
   const { user } = useContext(UserContext);
@@ -68,6 +83,12 @@ export default function Invoices() {
     );
   }, []);
 
+  async function initNewInvoice() {
+    const { invoice }: any = await createInvoiceModal.show({ from: user?.uid });
+
+    createInvoice(invoice);
+  }
+
   return (
     <div className="space-y-4 max-w-2xl mx-auto mt-4">
       <h2>Invoices</h2>
@@ -76,31 +97,24 @@ export default function Invoices() {
           <TabsTrigger value="sent">Sent</TabsTrigger>
           <TabsTrigger value="received">Received</TabsTrigger>
         </TabsList>
-        <TabsContent value="sent">
-        {sentInvoices.length === 0 && (
+        <TabsContent value="sent" className="space-y-2">
+          {sentInvoices.length === 0 ? (
             <Alert className="text-center space-y-4">
               <AlertTitle>Send you first invoice today</AlertTitle>
               <AlertDescription className="space-y-4">
-                <p className="block">You have not yet experienced the new age of provable invoices.</p>
-                <Button variant="outline" onClick={() => createInvoiceModal.show({ from: user?.uid })}>Send New Invoice</Button>
+                <p className="block">
+                  You have not yet experienced the new age of provable invoices.
+                </p>
+                <Button variant="outline" onClick={initNewInvoice}>
+                  Send New Invoice
+                </Button>
               </AlertDescription>
             </Alert>
-          )}
+          ) : <Button className="w-full" onClick={initNewInvoice}>
+          Send New Invoice
+        </Button>}
           {sentInvoices.map((invoice) => (
-            <div
-              className="shadow-lg p-2 rounded-lg bg-white"
-              key={`invoice:${invoice.id}`}
-            >
-              <div className="flex flex-row">
-                <div className="grow">
-                  <small className="text-gray-400 mt-4">To</small>
-                  <ShortAddress address={invoice.to} length={5} />
-                </div>
-                <div className="w-32 text-center align-middle mt-8 text-xl font-medium">
-                  <p>Rs. {invoice.amount}</p>
-                </div>
-              </div>
-            </div>
+            <SentInvoiceCard invoice={invoice} key={invoice.id} />
           ))}
         </TabsContent>
         <TabsContent value="received">

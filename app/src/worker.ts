@@ -71,9 +71,6 @@ function fetchFiles(type: string) {
 
 const FileSystem = (files: any, onAccess: any): MinaCache => ({
   read({ persistentId, uniqueId, dataType }: any) {
-    // read current uniqueId, return data if it matches
-    console.log(Object.keys(files));
-
     if (!files[persistentId]) {
       console.log("read");
       console.log({ persistentId, uniqueId, dataType });
