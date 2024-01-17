@@ -8,6 +8,7 @@ import { Loader } from "../components/Loader";
 import { Button } from "@/components/ui/button";
 import { User, getAuth } from "firebase/auth";
 import { LogOutIcon } from "lucide-react";
+import InvoicesMinaApp from "../components/InvoicesMinaApp";
 
 const worker = new MyWorker();
 
@@ -85,6 +86,11 @@ export default function Layout() {
   return (
     <div className="min-h-[100vh] relative">
       <Header user={user} />
+      {user && (
+        <div className="max-w-2xl flex mx-auto mt-4">
+          <InvoicesMinaApp address={user?.uid as string} handleCreate={mint} />
+        </div>
+      )}
       <Outlet />
     </div>
   );
