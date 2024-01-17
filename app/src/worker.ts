@@ -1,5 +1,8 @@
 // import * as Comlink from "comlink";
 import {
+  AccountUpdate,
+  Field,
+  MerkleTree,
   Mina,
   PublicKey,
   // MerkleTree,
@@ -14,12 +17,13 @@ import {
 } from "../../contracts/build/src/";
 import type { MinaCache } from "./cache";
 
-const zkAppAddress = "B62qmUQ7bpqVr4P3gj7RbmNmEdnA892NqwSJcmxgN6xMDVamiXQgAy8";
+const zkAppAddress = PublicKey.fromBase58(import.meta.env.VITE_ZK_APP_KEY);
 // const minaUrl = "https://proxy.berkeley.minaexplorer.com/graphql";
 // const archiveUrl = "https://archive.berkeley.minaexplorer.com";
 
 const minaUrl = "https://api.minascan.io/node/berkeley/v1/graphql";
 const archiveUrl = "https://api.minascan.io/archive/berkeley/v1/graphql/";
+
 const files: Record<string, Record<string, string>[]> = {
   provider: [
     { name: "lagrange-basis-fp-2048", type: "string" },
@@ -114,11 +118,9 @@ const network = Mina.Network({
 });
 Mina.setActiveInstance(network);
 
-await fetchAccount({ publicKey: zkAppAddress }, minaUrl);
+await fetchAccount({ publicKey: zkAppAddress });
 
-const zkApp = new InvoicesProvider(PublicKey.fromBase58(zkAppAddress));
-
-zkApp;
+const zkApp = new InvoicesProvider(zkAppAddress);
 
 addEventListener("message", (event: MessageEvent) => {
   console.log("worker event message", event.data);
@@ -148,7 +150,9 @@ addEventListener("message", (event: MessageEvent) => {
   }
 
   if (action === "mint") {
-    mint().then((txn) => {
+    const address = data.address;
+
+    mint(address).then((txn) => {
       postMessage({
         type: "response",
         action: "transaction",
@@ -173,18 +177,11 @@ const cache = (files: any[]) => {
     }
   });
 }
-  
 
 postStatusUpdate({ message: "Initiated zkApp compilation process" });
-const invoicesCacheFiles = fetchFiles("invoices");
+
 await InvoicesProvider.compile({ cache: cache(providerCacheFiles) });
-postStatusUpdate({
-  message: `Now compiling invoices app`,
-});
-const invoicesVkGenerated = await Invoices.compile({
-  cache: cache(await invoicesCacheFiles),
-});
-console.log(invoicesVkGenerated);
+
 postMessage({
   type: "zkapp",
   action: "compiled",
@@ -194,24 +191,37 @@ postStatusUpdate({ message: "" });
 
 // const tree = new MerkleTree(32);
 
-async function mint() {
-  // console.log("sending transaction");
-  // await fetchAccount(
-  //   { publicKey: zkAppAddress },
-  //   minaUrl
-  // );
-  // postStatusUpdate({ message: 'Crafting transaction' });
-  // const sender = PublicKey.fromBase58('B62qqgbzVWR7MVQyL8M3chhKXScVGD4HZxrcZoViSqroDCzC4Qd68Yh');
-  // const fee = Number(0.1) * 1e9;
-  // const tx = await Mina.transaction({ sender: sender, fee }, () => {
-  //   zkApp.commit();
-  // });
-  // postStatusUpdate({ message: 'Creating transaction proof' });
-  // console.log("creating proof");
-  // await tx.prove();
-  // console.log("created proof");
-  // postStatusUpdate({ message: 'Sending transaction' });
-  // return tx.toJSON();
+async function mint(senderKeyStr: string) {
+  console.log("sending transaction", zkAppAddress);
+
+  postStatusUpdate({
+    message: `Now compiling invoices app`,
+  });
+
+  const invoicesCacheFiles = fetchFiles("invoices");
+  await fetchAccount({ publicKey: PublicKey.fromBase58(senderKeyStr), tokenId: zkApp.token.id });
+  
+  const invoicesVkGenerated = await Invoices.compile({
+    cache: cache(await invoicesCacheFiles),
+  });
+
+  postStatusUpdate({ message: 'Crafting transaction' });
+  const sender = PublicKey.fromBase58(senderKeyStr);
+  const fee = Number(0.1) * 1e9;
+  const tree = new MerkleTree(16);
+
+  await fetchAccount({ publicKey: zkAppAddress });
+  const tx = await Mina.transaction({ sender: sender, fee }, () => {
+    AccountUpdate.fundNewAccount(sender);
+    zkApp.mint(sender, invoicesVkGenerated.verificationKey, tree.getRoot(), Field(1000));
+  });
+
+  postStatusUpdate({ message: 'Creating transaction proof' });
+  console.log("creating proof");
+  await tx.prove();
+  console.log("created proof");
+  postStatusUpdate({ message: 'Sending transaction' });
+  return tx.toJSON();
 }
 
 async function createInvoice(from: PublicKey, to: PublicKey, amount: UInt32) {

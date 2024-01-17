@@ -91,7 +91,6 @@ export default function Invoices() {
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto mt-4">
-      <h2>Invoices</h2>
       <Tabs defaultValue="sent" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="sent">Sent</TabsTrigger>
@@ -110,9 +109,11 @@ export default function Invoices() {
                 </Button>
               </AlertDescription>
             </Alert>
-          ) : <Button className="w-full" onClick={initNewInvoice}>
-          Send New Invoice
-        </Button>}
+          ) : (
+            <Button className="w-full" onClick={initNewInvoice}>
+              Send New Invoice
+            </Button>
+          )}
           {sentInvoices.map((invoice) => (
             <SentInvoiceCard invoice={invoice} key={invoice.id} />
           ))}

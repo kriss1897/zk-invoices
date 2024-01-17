@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
 
 import MyWorker from "../worker?worker";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import UserContext from "../context/UserContext";
 import { Loader } from "../components/Loader";
@@ -12,24 +12,60 @@ const worker = new MyWorker();
 
 export default function Layout() {
   const { user, loading } = useContext(UserContext);
+  const [compiled, setCompiled] = useState(false);
 
   useEffect(() => {
     let compiled = false;
 
     worker.onmessage = (event: any) => {
       const { type, action } = event.data || {};
+
+      if (type === "response" && action === "transaction") {
+        sendTransaction(event.data.data.txn);
+
+        return;
+      }
+      
       if (compiled) {
         return;
       }
 
       if (type === "zkapp" && action === "compiled") {
-        compiled = true;
-        toast.success("Compiled", { id: "zkapp-loader-toast" });
+        setCompiled(true);
       } else if (type === "update") {
         toast.loading(event.data.data, { id: "zkapp-loader-toast" });
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (compiled) {
+      toast.success("Compiled", { id: "zkapp-loader-toast" });
+    }
+  }, [compiled]);
+  
+  function mint() {
+    worker.postMessage({ action: 'mint', data: { address: user?.uid } });
+  }
+
+  async function sendTransaction(txn: any) {
+    const fee = "";
+    const memo = "";
+
+    const payload = {
+      transaction: txn,
+      feePayer: {
+        fee: fee,
+        memo: memo,
+      },
+    };
+
+    try {
+      await (window as any).mina.sendTransaction(payload);
+    } catch (error: any) {
+      console.log(error);
+    }
+  }
 
   if (loading) {
     return <Loader />;
