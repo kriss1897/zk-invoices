@@ -6,17 +6,28 @@ import toast from "react-hot-toast";
 import UserContext from "../context/UserContext";
 import { Loader } from "../components/Loader";
 import { Button } from "@/components/ui/button";
-import { getAuth } from "firebase/auth";
+import { User, getAuth } from "firebase/auth";
+import { LogOutIcon } from "lucide-react";
 
 const worker = new MyWorker();
+
+function Header({ user }: { user: null | User }) {
+  return (
+    <header className="bg-slate-900 py-4">
+    <div className="max-w-2xl flex mx-auto ">
+      <h1 className="text-white font-extrabold text-3xl"><span className="text-cyan-300">zk</span>Invoices</h1>
+      <div className="grow"></div>
+      {user && <Button variant="ghost" className="text-white" onClick={() => getAuth().signOut()}><LogOutIcon /></Button>}
+    </div>
+    </header>
+  );
+}
 
 export default function Layout() {
   const { user, loading } = useContext(UserContext);
   const [compiled, setCompiled] = useState(false);
 
   useEffect(() => {
-    let compiled = false;
-
     worker.onmessage = (event: any) => {
       const { type, action } = event.data || {};
 
@@ -25,7 +36,7 @@ export default function Layout() {
 
         return;
       }
-      
+
       if (compiled) {
         return;
       }
@@ -43,9 +54,9 @@ export default function Layout() {
       toast.success("Compiled", { id: "zkapp-loader-toast" });
     }
   }, [compiled]);
-  
+
   function mint() {
-    worker.postMessage({ action: 'mint', data: { address: user?.uid } });
+    worker.postMessage({ action: "mint", data: { address: user?.uid } });
   }
 
   async function sendTransaction(txn: any) {
@@ -73,11 +84,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-[100vh] relative">
-      <div className="max-w-2xl flex mx-auto mt-4">
-        <h1>zkInvoices</h1>
-        <div className="grow"></div>
-        {user && <Button onClick={() => getAuth().signOut()}>Signout</Button>}
-      </div>
+      <Header user={user} />
       <Outlet />
     </div>
   );
