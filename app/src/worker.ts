@@ -1,6 +1,7 @@
 // import * as Comlink from "comlink";
 import {
   AccountUpdate,
+  Bool,
   Field,
   MerkleTree,
   Mina,
@@ -9,20 +10,20 @@ import {
   UInt32,
   fetchAccount,
 } from "o1js";
+
 import {
-  // Invoice,
   Invoices,
   InvoicesProvider,
-  // InvoicesWitness,
-} from "../../contracts/build/src/";
+} from "../../contracts/build/src";
+
+import { Invoice, InvoicesWitness } from '../../contracts/src/InvoicesModels';
+
 import type { MinaCache } from "./cache";
 
 const zkAppAddress = PublicKey.fromBase58(import.meta.env.VITE_ZK_APP_KEY);
-// const minaUrl = "https://proxy.berkeley.minaexplorer.com/graphql";
-// const archiveUrl = "https://archive.berkeley.minaexplorer.com";
 
-const minaUrl = "https://api.minascan.io/node/berkeley/v1/graphql";
-const archiveUrl = "https://api.minascan.io/archive/berkeley/v1/graphql/";
+const minaUrl = import.meta.env.VITE_ZK_MINA_GRAPH;
+const archiveUrl = import.meta.env.VITE_ZK_MINA_ARCHIVE;
 
 const files: Record<string, Record<string, string>[]> = {
   provider: [
@@ -225,35 +226,32 @@ async function mint(senderKeyStr: string) {
 }
 
 async function createInvoice(from: PublicKey, to: PublicKey, amount: UInt32) {
-  console.log({ from, to, amount });
-  // console.log("sending transaction");
-  // console.log("tree root", tree.getRoot().toString());
-  // const account = PublicKey.fromBase58(
-  //   "B62qqgbzVWR7MVQyL8M3chhKXScVGD4HZxrcZoViSqroDCzC4Qd68Yh"
-  // );
-  // await fetchAccount(
-  //   { publicKey: zkAppAddress },
-  //   minaUrl
-  // );
-  // const invoice = new Invoice({
-  //   from,
-  //   to,
-  //   amount,
-  //   settled: Bool(false),
-  //   metadataHash: Field(0),
-  // });
-  // postStatusUpdate({ message: 'Crafting transaction' });
-  // const sender = PublicKey.fromBase58('B62qqgbzVWR7MVQyL8M3chhKXScVGD4HZxrcZoViSqroDCzC4Qd68Yh');
-  // const fee = Number(0.1) * 1e9;
-  // const tx = await Mina.transaction({ sender: sender, fee }, () => {
-  //   zkApp.createInvoice(invoice, new InvoicesWitness(tree.getWitness(0n)));
-  // });
-  // postStatusUpdate({ message: 'Creating transaction proof' });
-  // console.log("creating proof");
-  // await tx.prove();
-  // console.log("created proof");
-  // postStatusUpdate({ message: 'Sending transaction' });
-  // return tx.toJSON();
+  console.log("sending transaction");
+  const tree = new MerkleTree(16);
+  await fetchAccount(
+    { publicKey: zkAppAddress },
+    minaUrl
+  );
+
+  const invoice = new Invoice({
+    from,
+    to,
+    amount,
+    metadataHash: Field(0),
+    settled: Bool(false)
+  });
+
+  postStatusUpdate({ message: 'Crafting transaction' });
+  const fee = Number(0.1) * 1e9;
+  const tx = await Mina.transaction({ sender: from, fee }, () => {
+    zkApp.createInvoice(from, invoice, new InvoicesWitness(tree.getWitness(0n)));
+  });
+  postStatusUpdate({ message: 'Creating transaction proof' });
+  console.log("creating proof");
+  await tx.prove();
+  console.log("created proof");
+  postStatusUpdate({ message: 'Sending transaction' });
+  return tx.toJSON();
 }
 
 function postStatusUpdate({ message }: { message: string }) {

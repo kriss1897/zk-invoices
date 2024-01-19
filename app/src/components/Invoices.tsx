@@ -20,6 +20,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useModal } from "@ebay/nice-modal-react";
 
 import { RawInvoice, createInvoice } from "../services/InvoiceService";
+import { useOutletContext } from "react-router-dom";
 
 function SentInvoiceCard({ invoice }: { invoice: RawInvoice }) {
   return (
@@ -42,6 +43,7 @@ function SentInvoiceCard({ invoice }: { invoice: RawInvoice }) {
 }
 
 export default function Invoices() {
+  const outlet: any = useOutletContext();
   const createInvoiceModal = useModal("create-invoice-modal");
   const [sentInvoices, setSentInvoices] = useState<any[]>([]);
   const [receivedInvoices, setReceivedInvoices] = useState<any[]>([]);
@@ -89,6 +91,10 @@ export default function Invoices() {
     createInvoice(invoice);
   }
 
+  async function mintInvoice(from:string , to: string, amount: number) {
+    outlet.createInvoice(from, to, amount);
+  }
+
   return (
     <div className="space-y-4 max-w-2xl mx-auto mt-4">
       <Tabs defaultValue="sent" className="w-full">
@@ -115,7 +121,10 @@ export default function Invoices() {
             </Button>
           )}
           {sentInvoices.map((invoice) => (
+            <div key={invoice.id}>
             <SentInvoiceCard invoice={invoice} key={invoice.id} />
+            <Button onClick={() => mintInvoice(user?.uid as string, invoice.to, invoice.amount)}>Mint</Button>
+            </div>
           ))}
         </TabsContent>
         <TabsContent value="received">

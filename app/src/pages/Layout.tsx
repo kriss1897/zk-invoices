@@ -60,6 +60,10 @@ export default function Layout() {
     worker.postMessage({ action: "mint", data: { address: user?.uid } });
   }
 
+  function createInvoice(from: string, to: string, amount: number) {
+    worker.postMessage({ action: "createInvoice", data: { from, to, amount } });
+  }
+
   async function sendTransaction(txn: any) {
     const fee = "";
     const memo = "";
@@ -91,7 +95,7 @@ export default function Layout() {
           <InvoicesMinaApp address={user?.uid as string} handleCreate={mint} />
         </div>
       )}
-      <Outlet />
+      <Outlet context={{ createInvoice }}/>
     </div>
   );
 }
