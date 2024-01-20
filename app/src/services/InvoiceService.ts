@@ -5,7 +5,8 @@ export type RawInvoice = {
   from: string;
   to: string;
   amount: number;
-  createdAt: Timestamp
+  provider: string;
+  createdAt: Timestamp;
 };
 
 export function createInvoice(invoice: RawInvoice) {

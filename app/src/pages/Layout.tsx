@@ -7,17 +7,21 @@ import UserContext from "../context/UserContext";
 import { Loader } from "../components/Loader";
 import { Button } from "@/components/ui/button";
 import { User, getAuth } from "firebase/auth";
-import { LogOutIcon } from "lucide-react";
+import { LogOutIcon, User2Icon } from "lucide-react";
 import InvoicesMinaApp from "../components/InvoicesMinaApp";
+import { useModal } from "@ebay/nice-modal-react";
 
 const worker = new MyWorker();
 
 function Header({ user }: { user: null | User }) {
+  const userAccountModal = useModal('invoice-account-modal');
+
   return (
     <header className="bg-slate-900 py-4">
     <div className="max-w-2xl flex mx-auto ">
       <h1 className="text-white font-extrabold text-3xl"><span className="text-cyan-300">zk</span>Invoices</h1>
       <div className="grow"></div>
+      {user && <Button variant="ghost" className="text-white" onClick={() => userAccountModal.show({ address: user?.uid as string })}><User2Icon/></Button>}
       {user && <Button variant="ghost" className="text-white" onClick={() => getAuth().signOut()}><LogOutIcon /></Button>}
     </div>
     </header>
