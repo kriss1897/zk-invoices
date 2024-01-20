@@ -209,12 +209,12 @@ async function mint(senderKeyStr: string) {
   postStatusUpdate({ message: 'Crafting transaction' });
   const sender = PublicKey.fromBase58(senderKeyStr);
   const fee = Number(0.1) * 1e9;
-  const tree = new MerkleTree(16);
+  const tree = new MerkleTree(32);
 
   await fetchAccount({ publicKey: zkAppAddress });
   const tx = await Mina.transaction({ sender: sender, fee }, () => {
     AccountUpdate.fundNewAccount(sender);
-    zkApp.mint(sender, invoicesVkGenerated.verificationKey, tree.getRoot(), Field(1000));
+    zkApp.mint(sender, invoicesVkGenerated.verificationKey, tree.getRoot());
   });
 
   postStatusUpdate({ message: 'Creating transaction proof' });
