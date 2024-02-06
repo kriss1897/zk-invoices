@@ -17,28 +17,45 @@ import { ShortAddress } from "../utils/common";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useModal } from "@ebay/nice-modal-react";
 
 import { RawInvoice, createInvoice } from "../services/InvoiceService";
 import { useOutletContext } from "react-router-dom";
 
-function SentInvoiceCard({ invoice }: { invoice: RawInvoice }) {
+function SentInvoiceCard({
+  invoice,
+  mint,
+}: {
+  invoice: RawInvoice;
+  mint?: () => void;
+}) {
   return (
-    <div
-      className="shadow-lg p-2 rounded-lg bg-white"
-      key={`invoice:${invoice.id}`}
-    >
-      <small>{invoice.createdAt.toDate().toDateString()}</small>
-      <div className="flex flex-row">
-        <div className="grow">
-          <small className="text-gray-400 mt-4">To</small>
-          <ShortAddress address={invoice.to} length={10} />
+    <Card>
+      <CardContent className="pt-4">
+        <div className="flex flex-row items-center">
+          <div className="grow">
+            <small className="text-gray-400">Sent to</small>
+            <ShortAddress address={invoice.to} length={10} />
+          </div>
+          <div className="text-center align-middle text-xl font-medium">
+            <p>Rs. {invoice.amount}</p>
+          </div>
         </div>
-        <div className="w-32 text-center align-middle text-xl font-medium">
-          <p>Rs. {invoice.amount}</p>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+      <CardFooter className="bg-slate-50 py-2">
+        {mint && (
+          <div className="flex flex-row w-full items-center">
+            <Badge variant="secondary">Not Committed</Badge>
+            <div className="flex-grow"></div>
+            <Button variant="outline" onClick={() => mint()}>
+              Mint
+            </Button>
+          </div>
+        )}
+      </CardFooter>
+    </Card>
   );
 }
 
@@ -91,7 +108,7 @@ export default function Invoices() {
     createInvoice(invoice);
   }
 
-  async function mintInvoice(from:string , to: string, amount: number) {
+  async function mintInvoice(from: string, to: string, amount: number) {
     outlet.createInvoice(from, to, amount);
   }
 
@@ -121,10 +138,13 @@ export default function Invoices() {
             </Button>
           )}
           {sentInvoices.map((invoice) => (
-            <div key={invoice.id}>
-            <SentInvoiceCard invoice={invoice} key={invoice.id} />
-            <Button onClick={() => mintInvoice(user?.uid as string, invoice.to, invoice.amount)}>Mint</Button>
-            </div>
+            <SentInvoiceCard
+              invoice={invoice}
+              key={invoice.id}
+              mint={() =>
+                mintInvoice(user?.uid as string, invoice.to, invoice.amount)
+              }
+            />
           ))}
         </TabsContent>
         <TabsContent value="received">

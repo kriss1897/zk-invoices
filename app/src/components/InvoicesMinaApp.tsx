@@ -25,7 +25,7 @@ export default function InvoicesMinaApp({
   const [account, setAccount] = useState<any | undefined | null>();
 
   useEffect(() => {
-    fetchInvoicesAccount(address).then(({ account, error }) => {
+    fetchInvoicesAccount(address).then(({ account }) => {
       setAccount(account ? account : null);
     });
   }, []);
