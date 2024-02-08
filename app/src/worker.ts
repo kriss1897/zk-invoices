@@ -20,47 +20,21 @@ import { Invoice, InvoicesWitness } from '../../contracts/src/InvoicesModels';
 
 import type { MinaCache } from "./cache";
 
-const zkAppAddress = PublicKey.fromBase58(import.meta.env.VITE_ZK_APP_KEY);
-
 const minaUrl = import.meta.env.VITE_ZK_MINA_GRAPH;
 const archiveUrl = import.meta.env.VITE_ZK_MINA_ARCHIVE;
 
-const files: Record<string, Record<string, string>[]> = {
-  provider: [
-    { name: "lagrange-basis-fp-2048", type: "string" },
-    { name: "lagrange-basis-fp-4096", type: "string" },
-    { name: "srs-fp-65536", type: "string" },
-    { name: "srs-fq-32768", type: "string" },
-    { name: "step-vk-invoicesprovider-commit", type: "string" },
-    { name: "step-vk-invoicesprovider-createinvoice", type: "string" },
-    { name: "step-vk-invoicesprovider-increaselimit", type: "string" },
-    { name: "step-vk-invoicesprovider-mint", type: "string" },
-    { name: "step-vk-invoicesprovider-settleinvoice", type: "string" },
-    { name: "step-vk-invoicesprovider-upgrade", type: "string" },
-    { name: "wrap-vk-invoicesprovider", type: "string" },
-  ],
-  invoices: [
-    { type: "string", name: "lagrange-basis-fp-1024" },
-    { type: "string", name: "lagrange-basis-fp-65536" },
-    { type: "string", name: "srs-fp-65536" },
-    { type: "string", name: "srs-fq-32768" },
-    { type: "string", name: "step-vk-invoices-commit" },
-    { type: "string", name: "step-vk-invoices-createinvoice" },
-    { type: "string", name: "step-vk-invoices-increaselimit" },
-    { type: "string", name: "step-vk-invoices-init" },
-    { type: "string", name: "step-vk-invoices-settleinvoice" },
-    { type: "string", name: "wrap-vk-invoices" },
-  ],
-};
+async function fetchFiles(type: string) {
+  const { files } = await fetch(`${import.meta.env.VITE_API_BASE_URL}/cache/discovery/${type}`).then(
+    (res) => res.json()
+  );
 
-function fetchFiles(type: string) {
   return Promise.all(
-    files[type].map((file) => {
+    files.map((file: Record<string, string>) => {
       return Promise.all([
-        fetch(`http://localhost:3000/cache/${type}/${file.name}.header`).then(
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/cache/${type}/${file.name}.header`).then(
           (res) => res.text()
         ),
-        fetch(`http://localhost:3000/cache/${type}/${file.name}`).then((res) =>
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/cache/${type}/${file.name}`).then((res) =>
           res.text()
         ),
       ]).then(([header, data]) => ({ file, header, data }));
