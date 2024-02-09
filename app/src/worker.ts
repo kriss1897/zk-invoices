@@ -1,23 +1,4 @@
-// import * as Comlink from "comlink";
-import {
-  AccountUpdate,
-  Bool,
-  Field,
-  MerkleTree,
-  Mina,
-  PublicKey,
-  // MerkleTree,
-  UInt32,
-  fetchAccount,
-} from "o1js";
-
-import {
-  Invoices,
-  InvoicesProvider,
-} from "../../contracts/build/src";
-
-import { Invoice, InvoicesWitness } from '../../contracts/src/InvoicesModels';
-
+import { PublicKey, UInt32 } from "o1js";
 import type { MinaCache } from "./cache";
 
 const minaUrl = import.meta.env.VITE_ZK_MINA_GRAPH;
@@ -87,147 +68,193 @@ const FileSystem = (files: any, onAccess: any): MinaCache => ({
   canWrite: true,
 });
 
-const network = Mina.Network({
-  mina: minaUrl,
-  archive: archiveUrl,
-});
-Mina.setActiveInstance(network);
+async function main() {
+  const { AccountUpdate, Bool, Field, MerkleTree, Mina, fetchAccount } =
+    await import("o1js");
 
-await fetchAccount({ publicKey: zkAppAddress });
+  const zkAppAddress = PublicKey.fromBase58(import.meta.env.VITE_ZK_APP_KEY);
 
-const zkApp = new InvoicesProvider(zkAppAddress);
-
-addEventListener("message", (event: MessageEvent) => {
-  console.log("worker event message", event.data);
-  const { action, data } = event.data;
-
-  if (action === "getCommitment") {
-    // const commitment = zkApp.commitment.get().toString();
-    // postMessage({
-    //   type: 'response',
-    //   action: 'getCommitment',
-    //   data: { commitment }
-    // });
-  }
-
-  if (action === "createInvoice") {
-    const from = PublicKey.fromBase58(data.from);
-    const to = PublicKey.fromBase58(data.to);
-    const amount = UInt32.from(data.amount);
-
-    createInvoice(from, to, amount).then((txn) => {
-      postMessage({
-        type: "response",
-        action: "transaction",
-        data: { txn },
-      });
-    });
-  }
-
-  if (action === "mint") {
-    const address = data.address;
-
-    mint(address).then((txn) => {
-      postMessage({
-        type: "response",
-        action: "transaction",
-        data: { txn },
-      });
-    });
-  }
-});
-
-postStatusUpdate({ message: "Loading cached zkApp files" });
-const providerCacheFiles = await fetchFiles("provider");
-const cache = (files: any[]) => {
-  return FileSystem(files, ({ type, persistentId }: any) => {
-    if (type === "hit") {
-      postStatusUpdate({
-        message: `Found ${persistentId} in pre-built binaries`,
-      });
-    }
-
-    if (type === "miss") {
-      postStatusUpdate({ message: `Compiling ${persistentId}` });
-    }
-  });
-}
-
-postStatusUpdate({ message: "Initiated zkApp compilation process" });
-
-await InvoicesProvider.compile({ cache: cache(providerCacheFiles) });
-
-postMessage({
-  type: "zkapp",
-  action: "compiled",
-});
-console.log("compiled");
-postStatusUpdate({ message: "" });
-
-// const tree = new MerkleTree(32);
-
-async function mint(senderKeyStr: string) {
-  console.log("sending transaction", zkAppAddress);
-
-  postStatusUpdate({
-    message: `Now compiling invoices app`,
-  });
-
-  const invoicesCacheFiles = fetchFiles("invoices");
-  await fetchAccount({ publicKey: PublicKey.fromBase58(senderKeyStr), tokenId: zkApp.token.id });
-  
-  const invoicesVkGenerated = await Invoices.compile({
-    cache: cache(await invoicesCacheFiles),
-  });
-
-  postStatusUpdate({ message: 'Crafting transaction' });
-  const sender = PublicKey.fromBase58(senderKeyStr);
-  const fee = Number(0.1) * 1e9;
-  const tree = new MerkleTree(32);
-
-  await fetchAccount({ publicKey: zkAppAddress });
-  const tx = await Mina.transaction({ sender: sender, fee }, () => {
-    AccountUpdate.fundNewAccount(sender);
-    zkApp.mint(sender, invoicesVkGenerated.verificationKey, tree.getRoot());
-  });
-
-  postStatusUpdate({ message: 'Creating transaction proof' });
-  console.log("creating proof");
-  await tx.prove();
-  console.log("created proof");
-  postStatusUpdate({ message: 'Sending transaction' });
-  return tx.toJSON();
-}
-
-async function createInvoice(from: PublicKey, to: PublicKey, amount: UInt32) {
-  console.log("sending transaction");
-  const tree = new MerkleTree(16);
-  await fetchAccount(
-    { publicKey: zkAppAddress },
-    minaUrl
+  const { Invoices, InvoicesProvider } = await import(
+    "../../contracts/build/src"
   );
 
-  const invoice = new Invoice({
-    from,
-    to,
-    amount,
-    metadataHash: Field(0),
-    settled: Bool(false)
+  const { Invoice, InvoicesWitness } = await import(
+    "../../contracts/src/InvoicesModels"
+  );
+
+  const network = Mina.Network({
+    mina: minaUrl,
+    archive: archiveUrl,
+  });
+  Mina.setActiveInstance(network);
+
+  await fetchAccount({ publicKey: zkAppAddress });
+
+  const zkApp = new InvoicesProvider(zkAppAddress);
+
+  addEventListener("message", (event: MessageEvent) => {
+    console.log("worker event message", event.data);
+    const { action, data } = event.data;
+
+    if (action === "getCommitment") {
+      // const commitment = zkApp.commitment.get().toString();
+      // postMessage({
+      //   type: 'response',
+      //   action: 'getCommitment',
+      //   data: { commitment }
+      // });
+    }
+
+    if (action === "createInvoice") {
+      const from = PublicKey.fromBase58(data.from);
+      const to = PublicKey.fromBase58(data.to);
+      const amount = UInt32.from(data.amount);
+
+      createInvoice(from, to, amount).then((txn) => {
+        postMessage({
+          type: "response",
+          action: "transaction",
+          data: { txn },
+        });
+      });
+    }
+
+    if (action === "mint") {
+      const address = data.address;
+
+      mint(address).then((txn) => {
+        postMessage({
+          type: "response",
+          action: "transaction",
+          data: { txn },
+        });
+      });
+    }
   });
 
-  postStatusUpdate({ message: 'Crafting transaction' });
-  const fee = Number(0.1) * 1e9;
-  const tx = await Mina.transaction({ sender: from, fee }, () => {
-    zkApp.createInvoice(from, invoice, new InvoicesWitness(tree.getWitness(0n)));
+  postStatusUpdate({ message: "Loading cached zkApp files" });
+  const providerCacheFiles = await fetchFiles("provider");
+  const cache = (files: any[]) => {
+    return FileSystem(files, ({ type, persistentId }: any) => {
+      if (type === "hit") {
+        postStatusUpdate({
+          message: `Found ${persistentId} in pre-built binaries`,
+        });
+      }
+
+      if (type === "miss") {
+        postStatusUpdate({ message: `Compiling ${persistentId}` });
+      }
+    });
+  };
+
+  postStatusUpdate({ message: "Initiated zkApp compilation process" });
+
+  await InvoicesProvider.compile({ cache: cache(providerCacheFiles) });
+
+  postMessage({
+    type: "zkapp",
+    action: "compiled",
   });
-  postStatusUpdate({ message: 'Creating transaction proof' });
-  console.log("creating proof");
-  await tx.prove();
-  console.log("created proof");
-  postStatusUpdate({ message: 'Sending transaction' });
-  return tx.toJSON();
+  console.log("compiled");
+  postStatusUpdate({ message: "" });
+
+  // const tree = new MerkleTree(32);
+
+  async function mint(senderKeyStr: string) {
+    console.log("sending transaction", zkAppAddress);
+
+    postStatusUpdate({
+      message: `Now compiling invoices app`,
+    });
+
+    const invoicesCacheFiles = fetchFiles("invoices");
+
+    const zkAppData = await fetchAccount(
+      {
+        publicKey: zkAppAddress,
+      },
+      minaUrl
+    );
+
+    console.log("app state", zkAppData.account?.zkapp?.appState[0].toString());
+
+    const accData = await fetchAccount({
+      publicKey: PublicKey.fromBase58(senderKeyStr),
+      tokenId: zkApp.token.id,
+    });
+
+    console.log("user state", accData.account?.zkapp?.appState);
+
+    const invoicesVkGenerated = await Invoices.compile({
+      cache: cache(await invoicesCacheFiles),
+    });
+
+    console.log(invoicesVkGenerated.verificationKey.hash);
+
+    postStatusUpdate({ message: "Crafting transaction" });
+    const sender = PublicKey.fromBase58(senderKeyStr);
+    const fee = Number(0.1) * 1e9;
+    const tree = new MerkleTree(32);
+
+    await fetchAccount({ publicKey: zkAppAddress });
+    const tx = await Mina.transaction({ sender: sender, fee }, () => {
+      AccountUpdate.fundNewAccount(sender);
+      zkApp.mint(sender, invoicesVkGenerated.verificationKey, tree.getRoot());
+    });
+
+    postStatusUpdate({ message: "Creating transaction proof" });
+    console.log("creating proof");
+    await tx.prove();
+    console.log("created proof");
+    postStatusUpdate({ message: "Sending transaction" });
+    return tx.toJSON();
+  }
+
+  async function createInvoice(from: PublicKey, to: PublicKey, amount: UInt32) {
+    const invoicesCacheFiles = fetchFiles("invoices");
+
+    console.log("sending transaction");
+    const tree = new MerkleTree(32);
+
+    console.log(from.toBase58().toString());
+    await fetchAccount({ publicKey: zkAppAddress }, minaUrl);
+    await fetchAccount({ publicKey: from, tokenId: Field.from(import.meta.env.VITE_ZK_APP_TOKEN_ID) }, minaUrl);
+
+    console.log("compile zkapp");
+    await Invoices.compile({
+      cache: cache(await invoicesCacheFiles),
+    });
+
+    const invoice = new Invoice({
+      from,
+      to,
+      amount,
+      metadataHash: Field(0),
+      settled: Bool(false),
+    });
+
+    postStatusUpdate({ message: "Crafting transaction" });
+    const fee = Number(0.1) * 1e9;
+    const tx = await Mina.transaction({ sender: from, fee }, () => {
+      zkApp.createInvoice(
+        from,
+        invoice,
+        new InvoicesWitness(tree.getWitness(0n))
+      );
+    });
+
+    postStatusUpdate({ message: "Creating transaction proof" });
+    console.log("creating proof");
+    await tx.prove();
+    console.log("created proof");
+    postStatusUpdate({ message: "Sending transaction" });
+    return tx.toJSON();
+  }
+
+  function postStatusUpdate({ message }: { message: string }) {
+    postMessage({ type: "update", data: message });
+  }
 }
 
-function postStatusUpdate({ message }: { message: string }) {
-  postMessage({ type: "update", data: message });
-}
+main().catch(console.error);
