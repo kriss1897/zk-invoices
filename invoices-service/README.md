@@ -1,6 +1,5 @@
 # Invoices Service
 
-
 ```
 npm run dev            : run the local development server
 npm test               : run the tests
