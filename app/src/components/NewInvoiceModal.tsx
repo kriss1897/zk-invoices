@@ -1,13 +1,13 @@
-import { Fragment } from "react";
-import { Transition, Dialog } from "@headlessui/react";
-import NiceModal, { useModal } from "@ebay/nice-modal-react";
-import InvoiceForm from "./InvoiceForm";
-import { useRandomInvoice } from "../utils/useRandomInvoice";
-import { Button } from "@/components/ui/button";
-import { RotateCcw } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Fragment } from 'react';
+import { Transition, Dialog } from '@headlessui/react';
+import NiceModal, { useModal } from '@ebay/nice-modal-react';
+import InvoiceForm from './InvoiceForm';
+import { useRandomInvoice } from '../utils/useRandomInvoice';
+import { Button } from '@/components/ui/button';
+import { RotateCcw } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
-import { RawInvoice } from "../services/InvoiceService";
+import { RawInvoice } from '../services/InvoiceService';
 
 const InvoiceModal = NiceModal.create(() => {
   const modal = useModal();
@@ -50,7 +50,11 @@ const InvoiceModal = NiceModal.create(() => {
                   className="text-2xl font-medium text-gray-900"
                 >
                   Send Invoice
-                  <Button variant="outline" className="float-right" onClick={regenerate}>
+                  <Button
+                    variant="outline"
+                    className="float-right"
+                    onClick={regenerate}
+                  >
                     <RotateCcw />
                   </Button>
                 </Dialog.Title>
@@ -59,9 +63,15 @@ const InvoiceModal = NiceModal.create(() => {
                   className="text-center px-8 mt-4 text-gray-400"
                 ></Dialog.Description>
                 <Alert>
-                  <AlertDescription>For the purpose this demo, these values are randomly generated</AlertDescription>
+                  <AlertDescription>
+                    For the purpose this demo, these values are randomly
+                    generated
+                  </AlertDescription>
                 </Alert>
-                <InvoiceForm create={handleCreate} initialValue={invoice as RawInvoice} />
+                <InvoiceForm
+                  create={handleCreate}
+                  initialValue={invoice as RawInvoice}
+                />
               </Dialog.Panel>
             </Transition.Child>
           </div>
@@ -70,5 +80,5 @@ const InvoiceModal = NiceModal.create(() => {
     </Transition>
   );
 });
-  
+
 export default InvoiceModal;

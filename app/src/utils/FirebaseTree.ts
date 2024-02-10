@@ -4,9 +4,9 @@ import {
   getDoc,
   getFirestore,
   setDoc,
-} from "firebase/firestore";
+} from 'firebase/firestore';
 
-import { Field } from "o1js";
+import { Field } from 'o1js';
 
 export default class FirebaseStore {
   private nodes: Record<number, Record<string, Field>> = {};
@@ -28,7 +28,7 @@ export default class FirebaseStore {
     );
 
     if (node.exists()) {
-      return Field.from(node.get("data"));
+      return Field.from(node.get('data'));
     }
 
     return _default;

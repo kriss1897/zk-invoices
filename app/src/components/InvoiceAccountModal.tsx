@@ -1,9 +1,9 @@
-import { Fragment, useEffect, useState } from "react";
-import { Transition, Dialog } from "@headlessui/react";
-import NiceModal, { useModal } from "@ebay/nice-modal-react";
-import { Field, PublicKey, fetchAccount } from "o1js";
-import { ShortAddress } from "../utils/common";
-import { Loader } from "./Loader";
+import { Fragment, useEffect, useState } from 'react';
+import { Transition, Dialog } from '@headlessui/react';
+import NiceModal, { useModal } from '@ebay/nice-modal-react';
+import { Field, PublicKey, fetchAccount } from 'o1js';
+import { ShortAddress } from '../utils/common';
+import { Loader } from './Loader';
 
 async function fetchInvoicesAccount(address: string) {
   const acc = await fetchAccount(
@@ -25,11 +25,13 @@ const InvoiceAccountModal = NiceModal.create(() => {
   const usage = account?.zkapp?.appState[4].toBigInt();
 
   useEffect(() => {
-    fetchInvoicesAccount(modal.args?.address as string).then(({ account, error }) => {
-      console.log(modal.args, account, error);
+    fetchInvoicesAccount(modal.args?.address as string).then(
+      ({ account, error }) => {
+        console.log(modal.args, account, error);
 
-      setAccount(account ? account : null);
-    });
+        setAccount(account ? account : null);
+      }
+    );
   }, []);
 
   return (
@@ -69,10 +71,20 @@ const InvoiceAccountModal = NiceModal.create(() => {
                   as="p"
                   className="text-center px-8 mt-4 text-gray-400"
                 ></Dialog.Description>
-                { account === undefined ? <Loader/> : <div>
-                <p>Total Limit: { limit && Number(limit) }</p>
-                <p>Current Usage: { Number(usage).toString() }</p>
-                <div>App Hash: { zkAppHash && <ShortAddress address={zkAppHash} length={5}/> } </div></div>}
+                {account === undefined ? (
+                  <Loader />
+                ) : (
+                  <div>
+                    <p>Total Limit: {limit && Number(limit)}</p>
+                    <p>Current Usage: {Number(usage).toString()}</p>
+                    <div>
+                      App Hash:{' '}
+                      {zkAppHash && (
+                        <ShortAddress address={zkAppHash} length={5} />
+                      )}{' '}
+                    </div>
+                  </div>
+                )}
               </Dialog.Panel>
             </Transition.Child>
           </div>
@@ -81,5 +93,5 @@ const InvoiceAccountModal = NiceModal.create(() => {
     </Transition>
   );
 });
-  
+
 export default InvoiceAccountModal;

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from 'react';
 import {
   QuerySnapshot,
   collection,
@@ -8,21 +8,21 @@ import {
   orderBy,
   query,
   where,
-} from "firebase/firestore";
+} from 'firebase/firestore';
 
-import { User } from "firebase/auth";
-import UserContext from "../context/UserContext";
-import { ShortAddress } from "../utils/common";
+import { User } from 'firebase/auth';
+import UserContext from '../context/UserContext';
+import { ShortAddress } from '../utils/common';
 
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { useModal } from "@ebay/nice-modal-react";
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { useModal } from '@ebay/nice-modal-react';
 
-import { RawInvoice, createInvoice } from "../services/InvoiceService";
-import { useOutletContext } from "react-router-dom";
+import { RawInvoice, createInvoice } from '../services/InvoiceService';
+import { useOutletContext } from 'react-router-dom';
 
 function SentInvoiceCard({
   invoice,
@@ -61,7 +61,7 @@ function SentInvoiceCard({
 
 export default function Invoices() {
   const outlet: any = useOutletContext();
-  const createInvoiceModal = useModal("create-invoice-modal");
+  const createInvoiceModal = useModal('create-invoice-modal');
   const [sentInvoices, setSentInvoices] = useState<any[]>([]);
   const [receivedInvoices, setReceivedInvoices] = useState<any[]>([]);
   const { user } = useContext(UserContext);
@@ -72,15 +72,15 @@ export default function Invoices() {
 
     function formatInvoicesSnapshot(snap: QuerySnapshot): RawInvoice[] {
       return snap.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as RawInvoice)
+        (doc) => ({ id: doc.id, ...doc.data() }) as RawInvoice
       );
     }
 
     onSnapshot(
       query(
-        collection(db, "invoices"),
-        or(where("from", "==", userId), where("to", "==", userId)),
-        orderBy("createdAt", "desc")
+        collection(db, 'invoices'),
+        or(where('from', '==', userId), where('to', '==', userId)),
+        orderBy('createdAt', 'desc')
       ),
       (snap) => {
         const invoices = formatInvoicesSnapshot(snap);

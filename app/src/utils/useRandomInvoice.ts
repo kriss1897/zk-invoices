@@ -1,5 +1,5 @@
-import { PrivateKey } from "o1js";
-import { useState } from "react";
+import { PrivateKey } from 'o1js';
+import { useState } from 'react';
 
 export function useRandomInvoice(from: string) {
   const [invoice, setInvoice] = useState({

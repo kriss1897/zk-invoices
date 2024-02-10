@@ -1,9 +1,14 @@
-import UserContext from "../context/UserContext";
-import { getAuth, signInAnonymously, signInWithCustomToken, signInWithRedirect } from "firebase/auth";
-import { GoogleAuthProvider } from "firebase/auth";
-import { useContext } from "react";
-import { Loader } from "../components/Loader";
-import { Button } from "@/components/ui/button";
+import UserContext from '../context/UserContext';
+import {
+  getAuth,
+  signInAnonymously,
+  signInWithCustomToken,
+  signInWithRedirect,
+} from 'firebase/auth';
+import { GoogleAuthProvider } from 'firebase/auth';
+import { useContext } from 'react';
+import { Loader } from '../components/Loader';
+import { Button } from '@/components/ui/button';
 
 function LoginWithMina() {
   async function authenticate() {
@@ -13,31 +18,29 @@ function LoginWithMina() {
       await minaProvider.requestAccounts();
 
       const sign = await (window as any).mina.signMessage({
-        message: "login to invoices",
+        message: 'login to invoices',
       });
 
       const data = await fetch('http://localhost:3000/login', {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify(sign),
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       } as any).then((res) => res.json());
 
-      if (!data.token) { return; }
+      if (!data.token) {
+        return;
+      }
 
       const auth = getAuth();
       await signInWithCustomToken(auth, data.token);
     } else {
-      alert("wallet not found");
+      alert('wallet not found');
     }
   }
 
-  return (
-    <Button onClick={authenticate}>
-      Login with Mina
-    </Button>
-  );
+  return <Button onClick={authenticate}>Login with Mina</Button>;
 }
 
 export default function Login() {
@@ -54,7 +57,7 @@ export default function Login() {
     const auth = getAuth();
 
     signInAnonymously(auth).then(() => {
-      window.location.pathname = "/";
+      window.location.pathname = '/';
     });
   }
 
@@ -65,7 +68,7 @@ export default function Login() {
   if (user) {
     console.log('user', user);
 
-    window.location.pathname = "/";
+    window.location.pathname = '/';
 
     return <>Hi</>;
   }
@@ -73,16 +76,10 @@ export default function Login() {
   return (
     <div className="max-w-md mx-auto mt-14 space-y-4 flex flex-col">
       <LoginWithMina />
-      <Button
-        variant="secondary"
-        onClick={authenticate}
-      >
+      <Button variant="secondary" onClick={authenticate}>
         Login with google
       </Button>
-      <Button
-      variant="secondary"
-        onClick={anonymousLogin}
-      >
+      <Button variant="secondary" onClick={anonymousLogin}>
         Anonymous Login
       </Button>
     </div>

@@ -1,4 +1,9 @@
-import { Timestamp, addDoc, collection, getFirestore } from "firebase/firestore";
+import {
+  Timestamp,
+  addDoc,
+  collection,
+  getFirestore,
+} from 'firebase/firestore';
 
 export type RawInvoice = {
   id: string;

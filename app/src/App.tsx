@@ -1,12 +1,12 @@
-import NiceModal from "@ebay/nice-modal-react";
-import { initializeApp } from "firebase/app";
-import { Toaster } from "react-hot-toast";
+import NiceModal from '@ebay/nice-modal-react';
+import { initializeApp } from 'firebase/app';
+import { Toaster } from 'react-hot-toast';
 
-import { UserProvider } from "./context/UserContext";
-import Router from "./Router";
+import { UserProvider } from './context/UserContext';
+import Router from './Router';
 
-import InvoiceModal from "./components/NewInvoiceModal";
-import InvoiceAccountModal from "./components/InvoiceAccountModal";
+import InvoiceModal from './components/NewInvoiceModal';
+import InvoiceAccountModal from './components/InvoiceAccountModal';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FB_API_KEY,
@@ -20,7 +20,7 @@ const firebaseConfig = {
 // Initialize Firebase
 initializeApp(firebaseConfig);
 
-NiceModal.register("create-invoice-modal", InvoiceModal);
+NiceModal.register('create-invoice-modal', InvoiceModal);
 NiceModal.register('invoice-account-modal', InvoiceAccountModal);
 
 export default function AppContainer() {

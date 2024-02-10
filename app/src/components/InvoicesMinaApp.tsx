@@ -1,7 +1,7 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Field, PublicKey, fetchAccount } from "o1js";
-import { useEffect, useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Field, PublicKey, fetchAccount } from 'o1js';
+import { useEffect, useState } from 'react';
 
 async function fetchInvoicesAccount(address: string) {
   const acc = await fetchAccount(
@@ -35,7 +35,7 @@ export default function InvoicesMinaApp({
   }
 
   if (account !== null) {
-    return <></>
+    return <></>;
   }
 
   return (

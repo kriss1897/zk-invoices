@@ -1,4 +1,3 @@
-
 export type CommonHeader = {
   /**
    * Header version to avoid parsing incompatible headers.
@@ -16,7 +15,7 @@ export type CommonHeader = {
    * Specifies whether the data to be read is a utf8-encoded string or raw binary data. This was added
    * because node's `fs.readFileSync` returns garbage when reading string files without specifying the encoding.
    */
-  dataType: "string" | "bytes";
+  dataType: 'string' | 'bytes';
 };
 
 export type StepKeyHeader<Kind> = {
@@ -27,13 +26,17 @@ export type StepKeyHeader<Kind> = {
   hash: string;
 };
 
-export type WrapKeyHeader<Kind> = { kind: Kind; programName: string; hash: string };
+export type WrapKeyHeader<Kind> = {
+  kind: Kind;
+  programName: string;
+  hash: string;
+};
 
 export type CacheHeader = (
-  | StepKeyHeader<"step-pk">
-  | StepKeyHeader<"step-vk">
-  | WrapKeyHeader<"wrap-pk">
-  | WrapKeyHeader<"wrap-vk">
+  | StepKeyHeader<'step-pk'>
+  | StepKeyHeader<'step-vk'>
+  | WrapKeyHeader<'wrap-pk'>
+  | WrapKeyHeader<'wrap-vk'>
 ) &
   CommonHeader;
 
