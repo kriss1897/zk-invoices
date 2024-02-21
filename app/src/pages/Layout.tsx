@@ -88,7 +88,7 @@ export default function Layout() {
     worker.postMessage({ action: 'createInvoice', data: { from, to, amount } });
   }
 
-  async function sendTransaction(txn: any) {
+  async function sendTransaction(txn: string) {
     const fee = '';
     const memo = '';
 
