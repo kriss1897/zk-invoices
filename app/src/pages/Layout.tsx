@@ -10,6 +10,7 @@ import { User, getAuth } from 'firebase/auth';
 import { LogOutIcon, User2Icon } from 'lucide-react';
 import InvoicesMinaApp from '../components/InvoicesMinaApp';
 import { useModal } from '@ebay/nice-modal-react';
+import { Field } from 'o1js';
 
 const worker = new MyWorker();
 
@@ -84,8 +85,8 @@ export default function Layout() {
     worker.postMessage({ action: 'mint', data: { address: user?.uid } });
   }
 
-  function createInvoice(from: string, to: string, amount: number) {
-    worker.postMessage({ action: 'createInvoice', data: { from, to, amount } });
+  function createInvoice(id: Field, from: string, to: string, amount: number, dueDate: Date) {
+    worker.postMessage({ action: 'createInvoice', data: { id, dueDate, from, to, amount } });
   }
 
   async function sendTransaction(txn: string) {

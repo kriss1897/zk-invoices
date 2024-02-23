@@ -5,7 +5,12 @@ import InvoiceForm from './InvoiceForm';
 import { useRandomInvoice } from '../utils/useRandomInvoice';
 import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
 
 import { RawInvoice } from '../services/InvoiceService';
 
@@ -44,30 +49,33 @@ const InvoiceModal = NiceModal.create(() => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white px-6 py-8  text-left align-middle shadow-xl transition-all">
-                <Dialog.Title
-                  as="h2"
-                  className="text-2xl font-medium text-gray-900"
-                >
-                  Send Invoice
-                  <Button
-                    variant="outline"
-                    className="float-right"
-                    onClick={regenerate}
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white px-6 py-8  text-left align-middle shadow-xl transition-all space-y-4">
+                <div className="flex flex-row justify-between">
+                  <Dialog.Title
+                    as="h2"
+                    className="text-2xl font-medium text-gray-900"
                   >
-                    <RotateCcw />
-                  </Button>
-                </Dialog.Title>
+                    Send Invoice
+                  </Dialog.Title>
+                  <HoverCard>
+                    <HoverCardTrigger>
+                      <Button
+                        variant="outline"
+                        className="float-right"
+                        onClick={regenerate}
+                      >
+                        <RotateCcw />
+                      </Button>
+                    </HoverCardTrigger>
+                    <HoverCardContent align='end' className="text-sm">
+                    For the purpose this demo, these values are randomly generated. Use this option to regenerate values.
+                    </HoverCardContent>
+                  </HoverCard>
+                </div>
                 <Dialog.Description
                   as="p"
                   className="text-center px-8 mt-4 text-gray-400"
                 ></Dialog.Description>
-                <Alert>
-                  <AlertDescription>
-                    For the purpose this demo, these values are randomly
-                    generated
-                  </AlertDescription>
-                </Alert>
                 <InvoiceForm
                   create={handleCreate}
                   initialValue={invoice as RawInvoice}
