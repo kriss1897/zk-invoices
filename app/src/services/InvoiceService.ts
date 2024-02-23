@@ -13,7 +13,7 @@ export type RawInvoice = {
   amount: number;
   provider: string;
   createdAt: Timestamp;
-  dueDate: Date;
+  dueDate: Timestamp;
   minaId: string;
 };
 

@@ -24,6 +24,7 @@ import { useModal } from '@ebay/nice-modal-react';
 import { RawInvoice, createInvoice } from '../services/InvoiceService';
 import { useOutletContext } from 'react-router-dom';
 import { Field } from 'o1js';
+import { formatDistance } from 'date-fns';
 
 function SentInvoiceCard({
   invoice,
@@ -39,6 +40,9 @@ function SentInvoiceCard({
           <div className="grow">
             <small className="text-gray-400">Sent to</small>
             <ShortAddress address={invoice.to} length={10} />
+
+            <small className="text-gray-400">Due Date</small>
+            <p>{formatDistance(invoice.dueDate.toDate(), new Date(), { addSuffix: true })}</p>
           </div>
           <div className="text-center align-middle text-xl font-medium">
             <p>Rs. {invoice.amount}</p>
@@ -166,6 +170,8 @@ export default function Invoices() {
                 <div className="grow">
                   <small className="text-gray-400 mt-4">From</small>
                   <ShortAddress address={invoice.from} length={5} />
+                  <small className="text-gray-400">Due Date</small>
+                  <p>{formatDistance(invoice.dueDate.toDate(), new Date(), { addSuffix: true })}</p>
                 </div>
                 <div className="w-32 text-center align-middle mt-8 text-xl font-medium">
                   <p>Rs. {invoice.amount}</p>
