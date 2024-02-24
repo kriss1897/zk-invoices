@@ -1,5 +1,6 @@
 import { Field, PublicKey, UInt32 } from 'o1js';
 import type { MinaCache } from './cache';
+import { Timestamp } from 'firebase/firestore';
 
 const minaUrl = import.meta.env.VITE_ZK_MINA_GRAPH;
 const archiveUrl = import.meta.env.VITE_ZK_MINA_ARCHIVE;
@@ -72,7 +73,9 @@ async function main() {
   const { AccountUpdate, Bool, Field, MerkleTree, Mina, fetchAccount } =
     await import('o1js');
 
-  const zkAppAddress = PublicKey.fromBase58(import.meta.env.VITE_ZK_APP_ADDRESS);
+  const zkAppAddress = PublicKey.fromBase58(
+    import.meta.env.VITE_ZK_APP_ADDRESS
+  );
 
   const { Invoices, InvoicesProvider } = await import(
     '../../contracts/build/src'
@@ -91,47 +94,71 @@ async function main() {
   await fetchAccount({ publicKey: zkAppAddress });
 
   const zkApp = new InvoicesProvider(zkAppAddress);
+  const compileInvoices = (function invoicesCompiler() {
+    let compiled: Promise<any> | undefined;
+
+    return async () => {
+      if (compiled) {
+        return compiled;
+      }
+
+      const invoicesCacheFiles = fetchFiles('invoices');
+
+      console.log('compile zkapp');
+      compiled = Invoices.compile({
+        cache: cache(await invoicesCacheFiles),
+      });
+
+      compiled.then(() => {
+        console.log('compile zkapp: done')
+      });
+
+      return compiled;
+    };
+  })();
 
   addEventListener('message', (event: MessageEvent) => {
     console.log('worker event message', event.data);
     const { action, data } = event.data;
-
-    if (action === 'getCommitment') {
-      // const commitment = zkApp.commitment.get().toString();
-      // postMessage({
-      //   type: 'response',
-      //   action: 'getCommitment',
-      //   data: { commitment }
-      // });
-    }
+    let pendingTxn;
 
     if (action === 'createInvoice') {
+      console.log('task: mint invoice');
+
+      console.log(data);
+
       const from = PublicKey.fromBase58(data.from);
       const to = PublicKey.fromBase58(data.to);
       const amount = UInt32.from(data.amount);
-      const id = Field(data.id);
-      const dueDate = UInt32.from(Math.floor(data.dueDate/1000));
+      const id = data.id;
+      const dueDateTimestamp = new Timestamp(data.dueDate.seconds, data.dueDate.nanoseconds);
+      const dueDate = UInt32.from(Math.floor(dueDateTimestamp.toDate().valueOf() / 1000));
 
-      createInvoice(id, dueDate, from, to, amount).then((txn) => {
-        postMessage({
-          type: 'response',
-          action: 'transaction',
-          data: { txn },
-        });
-      });
+      pendingTxn = createInvoice(id, dueDate, from, to, amount);
     }
 
     if (action === 'mint') {
       const address = data.address;
 
-      mint(address).then((txn) => {
+      pendingTxn = mint(address);
+    }
+
+    if (action === 'commit') {
+      const address = data.address;
+
+      console.log(address);
+
+      pendingTxn = commit(address);
+    }
+
+    pendingTxn &&
+      pendingTxn.then(({ txn, meta }) => {
         postMessage({
           type: 'response',
           action: 'transaction',
-          data: { txn },
+          data: { txn, meta },
         });
       });
-    }
   });
 
   postStatusUpdate({ message: 'Loading cached zkApp files' });
@@ -161,8 +188,6 @@ async function main() {
   console.log('compiled');
   postStatusUpdate({ message: '' });
 
-  // const tree = new MerkleTree(32);
-
   async function mint(senderKeyStr: string) {
     console.log('sending transaction', zkAppAddress);
 
@@ -187,7 +212,7 @@ async function main() {
     });
 
     await fetchAccount({
-      publicKey: PublicKey.fromBase58(senderKeyStr)
+      publicKey: PublicKey.fromBase58(senderKeyStr),
     });
 
     console.log('user state', accData.account?.zkapp?.appState);
@@ -214,21 +239,27 @@ async function main() {
     await tx.prove();
     console.log('created proof');
     postStatusUpdate({ message: 'Sending transaction' });
-    return tx.toJSON();
+
+    return {
+      txn: tx.toJSON(),
+      meta: {
+        task: 'mint-account',
+        args: {
+          sender: senderKeyStr,
+        },
+      },
+    };
   }
 
-  async function createInvoice(id: Field, dueDate: UInt32, from: PublicKey, to: PublicKey, amount: UInt32) {
-    const invoicesCacheFiles = fetchFiles('invoices');
-
-    console.log('sending transaction');
+  async function createInvoice(
+    id: Field,
+    dueDate: UInt32,
+    from: PublicKey,
+    to: PublicKey,
+    amount: UInt32
+  ) {
+    await compileInvoices();
     const tree = new MerkleTree(32);
-
-    console.log(from.toBase58().toString());
-
-    console.log('compile zkapp');
-    await Invoices.compile({
-      cache: cache(await invoicesCacheFiles),
-    });
 
     const invoice = new Invoice({
       id: id,
@@ -248,12 +279,10 @@ async function main() {
     await fetchAccount({ publicKey: zkAppAddress }, minaUrl);
     await fetchAccount(
       {
-        publicKey: from
+        publicKey: from,
       },
       minaUrl
     );
-
-    console.log(zkApp.token.id);
 
     await fetchAccount(
       {
@@ -278,7 +307,64 @@ async function main() {
     console.log('created proof');
     postStatusUpdate({ message: 'Sending transaction' });
 
-    return tx.toJSON();
+    return {
+      txn: tx.toJSON(),
+      meta: {
+        task: 'create-new-invoice',
+        args: {
+          id,
+          dueDate,
+          from,
+          to,
+          amount,
+        },
+      },
+    };
+  }
+
+  async function commit(from: PublicKey) {
+    console.log('commit: compile invoices zkapp')
+    await compileInvoices();
+    console.log('commit: compiled zkapp')
+
+    postStatusUpdate({ message: 'Crafting transaction' });
+    const fee = Number(0.1) * 1e9;
+
+    const userInvoicesApp = new Invoices(from, zkApp.token.id);
+
+    console.log(zkApp.token.id);
+
+    await fetchAccount({ publicKey: zkAppAddress }, minaUrl);
+    await fetchAccount({ publicKey: from }, minaUrl );
+    await fetchAccount(
+      {
+        publicKey: from,
+        tokenId: zkApp.token.id,
+      },
+      minaUrl
+    );
+
+    const tx = await Mina.transaction({ sender: from, fee }, () => {
+      userInvoicesApp.commit();
+
+      zkApp.approveAccountUpdate(userInvoicesApp.self);
+    });
+
+    postStatusUpdate({ message: 'Creating transaction proof' });
+    console.log('creating proof');
+    await tx.prove();
+    console.log('created proof');
+    postStatusUpdate({ message: 'Sending transaction' });
+
+    return {
+      txn: tx.toJSON(),
+      meta: {
+        task: 'commit-actions',
+        args: {
+          sender: from,
+        },
+      },
+    };
   }
 
   function postStatusUpdate({ message }: { message: string }) {

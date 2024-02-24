@@ -7,6 +7,7 @@ import Router from './Router';
 
 import InvoiceModal from './components/NewInvoiceModal';
 import InvoiceAccountModal from './components/InvoiceAccountModal';
+import TransactionsDrawer from './components/TransactionsDrawer';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FB_API_KEY,
@@ -22,6 +23,7 @@ initializeApp(firebaseConfig);
 
 NiceModal.register('create-invoice-modal', InvoiceModal);
 NiceModal.register('invoice-account-modal', InvoiceAccountModal);
+NiceModal.register('transaction-drawer', TransactionsDrawer);
 
 export default function AppContainer() {
   return (

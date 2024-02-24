@@ -7,7 +7,7 @@ import UserContext from '../context/UserContext';
 import { Loader } from '../components/Loader';
 import { Button } from '@/components/ui/button';
 import { User, getAuth } from 'firebase/auth';
-import { LogOutIcon, User2Icon } from 'lucide-react';
+import { LogOutIcon, User2Icon, ListChecksIcon } from 'lucide-react';
 import InvoicesMinaApp from '../components/InvoicesMinaApp';
 import { useModal } from '@ebay/nice-modal-react';
 import { Field } from 'o1js';
@@ -16,6 +16,7 @@ const worker = new MyWorker();
 
 function Header({ user }: { user: null | User }) {
   const userAccountModal = useModal('invoice-account-modal');
+  const transactionsDrawer = useModal('transaction-drawer');
 
   return (
     <header className="bg-slate-900 py-4">
@@ -24,6 +25,15 @@ function Header({ user }: { user: null | User }) {
           <span className="text-cyan-300">zk</span>Invoices
         </h1>
         <div className="grow"></div>
+        {user && (
+          <Button
+            variant="ghost"
+            className="text-white"
+            onClick={() => transactionsDrawer.show()}
+          >
+            <ListChecksIcon />
+          </Button>
+        )}
         {user && (
           <Button
             variant="ghost"
@@ -58,7 +68,18 @@ export default function Layout() {
       const { type, action } = event.data || {};
 
       if (type === 'response' && action === 'transaction') {
-        sendTransaction(event.data.data.txn);
+        const existingTxns = localStorage.getItem('totalTxns'),
+          txnKey = existingTxns ? `txn[${existingTxns}]` : `txn[0]`;
+
+        localStorage.setItem(txnKey, JSON.stringify(event.data));
+        localStorage.setItem(
+          'totalTxns',
+          `${existingTxns ? Number(existingTxns) + 1 : 0}`
+        );
+
+        sendTransaction(event.data.data.txn).then(({ hash }) => {
+          localStorage.setItem(`${txnKey}[hash]`, hash);
+        });
 
         return;
       }
@@ -85,8 +106,21 @@ export default function Layout() {
     worker.postMessage({ action: 'mint', data: { address: user?.uid } });
   }
 
-  function createInvoice(id: Field, from: string, to: string, amount: number, dueDate: Date) {
-    worker.postMessage({ action: 'createInvoice', data: { id, dueDate, from, to, amount } });
+  function commit() {
+    worker.postMessage({ action: 'commit', data: { address: user?.uid } });
+  }
+
+  function createInvoice(
+    id: Field,
+    from: string,
+    to: string,
+    amount: number,
+    dueDate: Date
+  ) {
+    worker.postMessage({
+      action: 'createInvoice',
+      data: { id, dueDate, from, to, amount },
+    });
   }
 
   async function sendTransaction(txn: string) {
@@ -102,7 +136,9 @@ export default function Layout() {
     };
 
     try {
-      await (window as any).mina.sendTransaction(payload);
+      const { hash } = await (window as any).mina.sendTransaction(payload);
+
+      return hash;
     } catch (error: any) {
       console.log(error);
     }
@@ -121,6 +157,11 @@ export default function Layout() {
         </div>
       )}
       <Outlet context={{ createInvoice }} />
+      <div className="max-w-2xl flex mx-auto mt-4">
+        <Button variant="ghost" className="w-full" onClick={commit}>
+          Commit Actions
+        </Button>
+      </div>
     </div>
   );
 }
