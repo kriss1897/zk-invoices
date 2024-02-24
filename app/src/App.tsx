@@ -29,7 +29,7 @@ export default function AppContainer() {
   return (
     <UserProvider>
       <NiceModal.Provider>
-        <Toaster position="top-right" />
+        <Toaster position="bottom-right" />
         <Router />
       </NiceModal.Provider>
     </UserProvider>

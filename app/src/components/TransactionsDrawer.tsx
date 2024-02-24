@@ -8,27 +8,36 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer';
 
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardTitle } from '@/components/ui/card';
 
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { formatDistanceToNow } from 'date-fns';
 
-const taskTitleMap: Record<string, string> = {
-  'create-new-invoice': 'Create New Invoice',
-  'commit-actions': 'Commit Actions',
-  'mint-account': 'Create New Account'
-}
+const CREATE_NEW_INVOICE = 'create-new-invoice';
+const COMMIT_ACTIONS = 'commit-actions';
+const MINT_ACCOUNT = 'mint-account';
 
 const DUMMY_TXN = {
   data: {
     txn: {},
     meta: {
-      task: 'create-new-invoice'
+      task: 'create-new-invoice',
     },
+    createdAt: new Date(),
   },
-  hash: import.meta.env.VITE_SAMPLE_TXN
+  hash: import.meta.env.VITE_SAMPLE_TXN,
 };
+
+function TextTimestamp({ date, label }: { date: Date; label: string }) {
+  return (
+    <>
+      <small className="text-gray-400">{label}</small>
+      <p>{formatDistanceToNow(date, { addSuffix: true })}</p>
+    </>
+  );
+}
 
 const TransactionsDrawer = NiceModal.create(() => {
   const modal = useModal();
@@ -52,38 +61,84 @@ const TransactionsDrawer = NiceModal.create(() => {
     setTransactions([DUMMY_TXN]);
   }, []);
 
+  function createNewInvoiceContent(data: any) {
+    return (
+      <div className="flex flex-row items-center">
+        <div className="grow">
+          <CardTitle>Create New Invoice</CardTitle>
+          <TextTimestamp date={data.createdAt} label="Created" />
+        </div>
+        <div className="text-center align-middle text-xl font-medium">
+          <Button variant="link">Retry</Button>
+        </div>
+      </div>
+    );
+  }
+
+  function createAccountContent(data: any) {
+    return (
+      <div className="flex flex-row items-center">
+        <div className="grow">
+          <CardTitle>Create New Account</CardTitle>
+          <TextTimestamp date={data.createdAt} label="Created" />
+        </div>
+        <div className="text-center align-middle text-xl font-medium">
+          <Button variant="link">Retry</Button>
+        </div>
+      </div>
+    );
+  }
+
+  function commitActionsContent(data: any) {
+    return (
+      <div className="flex flex-row items-center">
+        <div className="grow">
+          <CardTitle>Commit Actions</CardTitle>
+          <TextTimestamp date={data.createdAt} label="Created" />
+        </div>
+        <div className="text-center align-middle text-xl font-medium">
+          <Button variant="link">Retry</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Drawer open={modal.visible} onClose={() => modal.hide()}>
       <DrawerContent onAbort={() => modal.remove()}>
-        <div className="mx-auto w-full max-w-sm">
+        <div className="mx-auto w-full max-w-lg">
           <DrawerHeader>
             <DrawerTitle className="text-center">Transactions</DrawerTitle>
             {/* <DrawerDescription>All </DrawerDescription> */}
           </DrawerHeader>
           <div className="p-4 pb-0">
             {transactions.map(({ data, hash }: any) => {
-              return <Card key={hash}>
-              <CardContent className="pt-4">
-                <div className="flex flex-row items-center">
-                  <div className="grow">
-                    { taskTitleMap[data.meta.task] }
-                    {/* <small className="text-gray-400">Sent to</small> */}
-                    {/* <small className="text-gray-400">Due Date</small> */}
-                    {/* <p>{formatDistance(invoice.dueDate.toDate(), new Date(), { addSuffix: true })}</p> */}
-                  </div>
-                  {/* <div className="text-center align-middle text-xl font-medium">
-            <p>Rs. {invoice.amount}</p>
-          </div> */}
-                </div>
-              </CardContent>
-              <CardFooter className="bg-slate-50 py-2">
-                <div className="flex flex-row w-full items-center">
-                  <Badge variant="secondary">Not Committed</Badge>
-                  <div className="flex-grow"></div>
-                  <Button asChild variant="outline"><a target='_blank' href={`https://minascan.io/berkeley/tx/${hash}/txInfo`}>View on Explorer</a></Button>
-                </div>
-              </CardFooter>
-            </Card>
+              return (
+                <Card key={hash}>
+                  <CardContent className="pt-4 space-y-4">
+                    {data.meta.task === CREATE_NEW_INVOICE &&
+                      createNewInvoiceContent(data)}
+                    {data.meta.task === MINT_ACCOUNT &&
+                      createAccountContent(data)}
+                    {data.meta.task === COMMIT_ACTIONS &&
+                      commitActionsContent(data)}
+                  </CardContent>
+                  <CardFooter className="bg-slate-50 py-2">
+                    <div className="flex flex-row w-full items-center">
+                      <Badge variant="secondary">Not Committed</Badge>
+                      <div className="flex-grow"></div>
+                      <Button asChild variant="outline">
+                        <a
+                          target="_blank"
+                          href={`https://minascan.io/berkeley/tx/${hash}/txInfo`}
+                        >
+                          View on Explorer
+                        </a>
+                      </Button>
+                    </div>
+                  </CardFooter>
+                </Card>
+              );
             })}
           </div>
           <DrawerFooter>
