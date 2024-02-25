@@ -19,22 +19,11 @@ const CREATE_NEW_INVOICE = 'create-new-invoice';
 const COMMIT_ACTIONS = 'commit-actions';
 const MINT_ACCOUNT = 'mint-account';
 
-const DUMMY_TXN = {
-  data: {
-    txn: {},
-    meta: {
-      task: 'create-new-invoice',
-    },
-    createdAt: new Date(),
-  },
-  hash: import.meta.env.VITE_SAMPLE_TXN,
-};
-
 function TextTimestamp({ date, label }: { date: Date; label: string }) {
   return (
     <>
       <small className="text-gray-400">{label}</small>
-      <p>{formatDistanceToNow(date, { addSuffix: true })}</p>
+      <p>{date ? formatDistanceToNow(date, { addSuffix: true }) : 'Date Unavailable'}</p>
     </>
   );
 }
@@ -44,6 +33,10 @@ const TransactionsDrawer = NiceModal.create(() => {
   const [transactions, setTransactions] = useState<any>([]);
 
   useEffect(() => {
+    loadTxns();
+  }, []);
+
+  function loadTxns() {
     const txnsCountStr = localStorage.getItem('totalTxns'),
       txnsCount = txnsCountStr ? Number(txnsCountStr) : 0;
 
@@ -51,25 +44,21 @@ const TransactionsDrawer = NiceModal.create(() => {
       .fill(1)
       .map((x, idx) => {
         return {
-          data: localStorage.getItem(`txn[${idx}]`),
+          index: idx,
+          data: JSON.parse(localStorage.getItem(`txn[${idx}]`) as string),
           hash: localStorage.getItem(`txn[${idx}][hash]`),
         };
       });
 
-    console.log(txns);
-
-    setTransactions([DUMMY_TXN]);
-  }, []);
+    setTransactions(txns);
+  }
 
   function createNewInvoiceContent(data: any) {
     return (
       <div className="flex flex-row items-center">
         <div className="grow">
           <CardTitle>Create New Invoice</CardTitle>
-          <TextTimestamp date={data.createdAt} label="Created" />
-        </div>
-        <div className="text-center align-middle text-xl font-medium">
-          <Button variant="link">Retry</Button>
+          <TextTimestamp date={data.meta.createdAt} label="Created" />
         </div>
       </div>
     );
@@ -80,10 +69,7 @@ const TransactionsDrawer = NiceModal.create(() => {
       <div className="flex flex-row items-center">
         <div className="grow">
           <CardTitle>Create New Account</CardTitle>
-          <TextTimestamp date={data.createdAt} label="Created" />
-        </div>
-        <div className="text-center align-middle text-xl font-medium">
-          <Button variant="link">Retry</Button>
+          <TextTimestamp date={data.meta.createdAt} label="Created" />
         </div>
       </div>
     );
@@ -94,13 +80,34 @@ const TransactionsDrawer = NiceModal.create(() => {
       <div className="flex flex-row items-center">
         <div className="grow">
           <CardTitle>Commit Actions</CardTitle>
-          <TextTimestamp date={data.createdAt} label="Created" />
-        </div>
-        <div className="text-center align-middle text-xl font-medium">
-          <Button variant="link">Retry</Button>
+          <TextTimestamp date={data.meta.createdAt} label="Created" />
         </div>
       </div>
     );
+  }
+
+  async function sendTransaction(data: any) {
+    const index = data.idx;
+    const fee = '';
+    const memo = '';
+
+    const payload = {
+      transaction: data.txn,
+      feePayer: {
+        fee: fee,
+        memo: memo,
+      },
+    };
+
+    try {
+      const { hash } = await (window as any).mina.sendTransaction(payload);
+
+      localStorage.setItem(`txn[${index}][hash]`, hash);
+
+      loadTxns();
+    } catch (error: any) {
+      console.log(error);
+    }
   }
 
   return (
@@ -111,30 +118,31 @@ const TransactionsDrawer = NiceModal.create(() => {
             <DrawerTitle className="text-center">Transactions</DrawerTitle>
             {/* <DrawerDescription>All </DrawerDescription> */}
           </DrawerHeader>
-          <div className="p-4 pb-0">
-            {transactions.map(({ data, hash }: any) => {
+          <div className="p-4 pb-0 space-y-4">
+            {transactions.map(({ data, index, hash }: any) => {
               return (
                 <Card key={hash}>
                   <CardContent className="pt-4 space-y-4">
                     {data.meta.task === CREATE_NEW_INVOICE &&
-                      createNewInvoiceContent(data)}
+                      createNewInvoiceContent({ ...data, idx: index })}
                     {data.meta.task === MINT_ACCOUNT &&
-                      createAccountContent(data)}
+                      createAccountContent({ ...data, idx: index })}
                     {data.meta.task === COMMIT_ACTIONS &&
-                      commitActionsContent(data)}
+                      commitActionsContent({ ...data, idx: index })}
                   </CardContent>
                   <CardFooter className="bg-slate-50 py-2">
                     <div className="flex flex-row w-full items-center">
                       <Badge variant="secondary">Not Committed</Badge>
                       <div className="flex-grow"></div>
-                      <Button asChild variant="outline">
+                      <Button variant={hash ? 'link' : 'default'} onClick={() => sendTransaction({ ...data, idx: index })} >{hash ? 'Resend' : 'Send'}</Button>
+                      {hash && <Button asChild variant="outline">
                         <a
                           target="_blank"
                           href={`https://minascan.io/berkeley/tx/${hash}/txInfo`}
                         >
                           View on Explorer
                         </a>
-                      </Button>
+                      </Button> }
                     </div>
                   </CardFooter>
                 </Card>

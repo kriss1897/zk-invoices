@@ -1,4 +1,4 @@
-import { Field, PublicKey, UInt32 } from 'o1js';
+import { PublicKey, UInt32 } from 'o1js';
 import type { MinaCache } from './cache';
 import { Timestamp } from 'firebase/firestore';
 
@@ -123,10 +123,6 @@ async function main() {
     let pendingTxn;
 
     if (action === 'createInvoice') {
-      console.log('task: mint invoice');
-
-      console.log(data);
-
       const from = PublicKey.fromBase58(data.from);
       const to = PublicKey.fromBase58(data.to);
       const amount = UInt32.from(data.amount);
@@ -134,19 +130,19 @@ async function main() {
       const dueDateTimestamp = new Timestamp(data.dueDate.seconds, data.dueDate.nanoseconds);
       const dueDate = UInt32.from(Math.floor(dueDateTimestamp.toDate().valueOf() / 1000));
 
+      console.log(Math.floor(dueDateTimestamp.toDate().valueOf() / 1000));
+
       pendingTxn = createInvoice(id, dueDate, from, to, amount);
     }
 
     if (action === 'mint') {
-      const address = data.address;
+      const address = PublicKey.fromBase58(data.address);
 
       pendingTxn = mint(address);
     }
 
     if (action === 'commit') {
-      const address = data.address;
-
-      console.log(address);
+      const address = PublicKey.fromBase58(data.address);
 
       pendingTxn = commit(address);
     }
@@ -188,14 +184,14 @@ async function main() {
   console.log('compiled');
   postStatusUpdate({ message: '' });
 
-  async function mint(senderKeyStr: string) {
+  async function mint(senderAddress: PublicKey) {
     console.log('sending transaction', zkAppAddress);
 
     postStatusUpdate({
       message: `Now compiling invoices app`,
     });
 
-    const invoicesCacheFiles = fetchFiles('invoices');
+    const invoicesVkGenerated = await compileInvoices();
 
     const zkAppData = await fetchAccount(
       {
@@ -206,32 +202,24 @@ async function main() {
 
     console.log('app state', zkAppData.account?.zkapp?.appState[0].toString());
 
-    const accData = await fetchAccount({
-      publicKey: PublicKey.fromBase58(senderKeyStr),
+    await fetchAccount({
+      publicKey: senderAddress,
       tokenId: zkApp.token.id,
     });
 
     await fetchAccount({
-      publicKey: PublicKey.fromBase58(senderKeyStr),
+      publicKey: senderAddress,
     });
 
-    console.log('user state', accData.account?.zkapp?.appState);
-
-    const invoicesVkGenerated = await Invoices.compile({
-      cache: cache(await invoicesCacheFiles),
-    });
-
-    console.log(invoicesVkGenerated.verificationKey.hash);
 
     postStatusUpdate({ message: 'Crafting transaction' });
-    const sender = PublicKey.fromBase58(senderKeyStr);
     const fee = Number(0.1) * 1e9;
     const tree = new MerkleTree(32);
 
     await fetchAccount({ publicKey: zkAppAddress });
-    const tx = await Mina.transaction({ sender: sender, fee }, () => {
-      AccountUpdate.fundNewAccount(sender);
-      zkApp.mint(sender, invoicesVkGenerated.verificationKey, tree.getRoot());
+    const tx = await Mina.transaction({ sender: senderAddress, fee }, () => {
+      AccountUpdate.fundNewAccount(senderAddress);
+      zkApp.mint(senderAddress, invoicesVkGenerated.verificationKey, tree.getRoot());
     });
 
     postStatusUpdate({ message: 'Creating transaction proof' });
@@ -244,15 +232,16 @@ async function main() {
       txn: tx.toJSON(),
       meta: {
         task: 'mint-account',
+        createdAt: new Date(),
         args: {
-          sender: senderKeyStr,
+          sender: senderAddress.toBase58(),
         },
       },
     };
   }
 
   async function createInvoice(
-    id: Field,
+    id: string,
     dueDate: UInt32,
     from: PublicKey,
     to: PublicKey,
@@ -262,7 +251,7 @@ async function main() {
     const tree = new MerkleTree(32);
 
     const invoice = new Invoice({
-      id: id,
+      id: Field.from(id),
       dueDate: dueDate,
       from,
       to,
@@ -276,7 +265,6 @@ async function main() {
 
     const userInvoicesApp = new Invoices(from, zkApp.token.id);
 
-    await fetchAccount({ publicKey: zkAppAddress }, minaUrl);
     await fetchAccount(
       {
         publicKey: from,
@@ -311,12 +299,13 @@ async function main() {
       txn: tx.toJSON(),
       meta: {
         task: 'create-new-invoice',
+        createdAt: new Date(),
         args: {
-          id,
-          dueDate,
-          from,
-          to,
-          amount,
+          id: id.toString(),
+          dueDate: new Date(Number(dueDate.toBigint()) * 1000),
+          from: from.toBase58(),
+          to: to.toBase58(),
+          amount: amount.toString(),
         },
       },
     };
@@ -331,9 +320,6 @@ async function main() {
     const fee = Number(0.1) * 1e9;
 
     const userInvoicesApp = new Invoices(from, zkApp.token.id);
-
-    console.log(zkApp.token.id);
-
     await fetchAccount({ publicKey: zkAppAddress }, minaUrl);
     await fetchAccount({ publicKey: from }, minaUrl );
     await fetchAccount(
@@ -360,8 +346,9 @@ async function main() {
       txn: tx.toJSON(),
       meta: {
         task: 'commit-actions',
+        createdAt: new Date(),
         args: {
-          sender: from,
+          sender: from.toBase58(),
         },
       },
     };

@@ -3,7 +3,6 @@ import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 
 import {
@@ -35,18 +34,8 @@ export default function InvoiceForm({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-4 text-left">
-        <div>
-          <label className="text-sm">From</label>
-          <input
-            id="invoice-from"
-            name="from"
-            className="w-full border bg-gray-50 rounded-md p-2"
-            readOnly
-            value={invoice.from}
-          />
-        </div>
-        <div>
+      <div className="space-y-4 text-left grid grid-cols-2 gap-4">
+        <div className='col-span-2'>
           <label className="text-sm">To</label>
           <input
             id="invoice-to"
@@ -71,16 +60,17 @@ export default function InvoiceForm({
           <label className="text-sm">Due Date</label>
           <Popover>
             <PopoverTrigger asChild>
-              <Button
-                variant={'outline'}
+              <div
                 className={cn(
-                  'w-full justify-start text-left font-normal border bg-gray-50 rounded-md p-2',
+                  'w-full justify-start text-left font-normal border bg-gray-50 rounded-md p-2 cursor-pointer',
                   !date && 'text-muted-foreground'
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date ? format(date, 'PPP') : <span>Pick a date</span>}
-              </Button>
+                <div>
+                  <CalendarIcon className="mr-2 h-4 w-4 inline mb-1" />
+                  {date ? format(date, 'PPP') : <span>Pick a date</span>}
+                </div>
+              </div>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
               <Calendar

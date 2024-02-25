@@ -10,7 +10,6 @@ import { User, getAuth } from 'firebase/auth';
 import { LogOutIcon, User2Icon, ListChecksIcon } from 'lucide-react';
 import InvoicesMinaApp from '../components/InvoicesMinaApp';
 import { useModal } from '@ebay/nice-modal-react';
-import { Field } from 'o1js';
 
 const worker = new MyWorker();
 
@@ -71,10 +70,10 @@ export default function Layout() {
         const existingTxns = localStorage.getItem('totalTxns'),
           txnKey = existingTxns ? `txn[${existingTxns}]` : `txn[0]`;
 
-        localStorage.setItem(txnKey, JSON.stringify(event.data));
+        localStorage.setItem(txnKey, JSON.stringify(event.data.data));
         localStorage.setItem(
           'totalTxns',
-          `${existingTxns ? Number(existingTxns) + 1 : 0}`
+          `${(existingTxns ? Number(existingTxns) : 0) + 1}`
         );
 
         sendTransaction(event.data.data.txn).then(({ hash }) => {
@@ -111,7 +110,7 @@ export default function Layout() {
   }
 
   function createInvoice(
-    id: Field,
+    id: string,
     from: string,
     to: string,
     amount: number,

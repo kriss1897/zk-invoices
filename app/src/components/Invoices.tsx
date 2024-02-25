@@ -23,7 +23,6 @@ import { useModal } from '@ebay/nice-modal-react';
 
 import { RawInvoice, createInvoice } from '../services/InvoiceService';
 import { useOutletContext } from 'react-router-dom';
-import { Field } from 'o1js';
 import { formatDistance } from 'date-fns';
 
 function SentInvoiceCard({
@@ -113,7 +112,7 @@ export default function Invoices() {
     createInvoice(invoice);
   }
 
-  async function mintInvoice(id: Field, from: string, to: string, amount: number, dueDate: Date) {
+  async function mintInvoice(id: string, from: string, to: string, amount: number, dueDate: Date) {
     outlet.createInvoice(id, from, to, amount, dueDate);
   }
 
@@ -147,7 +146,7 @@ export default function Invoices() {
               invoice={invoice}
               key={invoice.id}
               mint={() =>
-                mintInvoice(Field.from(invoice.minaId), user?.uid as string, invoice.to, invoice.amount, invoice.dueDate)
+                mintInvoice(invoice.minaId, user?.uid as string, invoice.to, invoice.amount, invoice.dueDate)
               }
             />
           ))}
