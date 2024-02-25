@@ -22,6 +22,7 @@
     "comlink": "^4.4.1",
     "date-fns": "^3.3.1",
     "firebase": "^10.6.0",
+    "invoices": "file:../contracts",
     "lucide-react": "^0.303.0",
     "o1js": "^0.16.2",
     "react": "^18.2.0",

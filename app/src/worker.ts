@@ -78,11 +78,11 @@ async function main() {
   );
 
   const { Invoices, InvoicesProvider } = await import(
-    '../../contracts/build/src'
+    'invoices/build/src'
   );
 
   const { Invoice, InvoicesWitness } = await import(
-    '../../contracts/src/InvoicesModels'
+    'invoices/src/InvoicesModels'
   );
 
   const network = Mina.Network({

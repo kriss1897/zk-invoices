@@ -180,6 +180,9 @@ export default function Invoices() {
           ))}
         </TabsContent>
       </Tabs>
+      <Button variant="ghost" className="w-full" onClick={outlet.commit}>
+        Commit Actions
+      </Button>
     </div>
   );
 }

@@ -155,12 +155,7 @@ export default function Layout() {
           <InvoicesMinaApp address={user?.uid as string} handleCreate={mint} />
         </div>
       )}
-      <Outlet context={{ createInvoice }} />
-      <div className="max-w-2xl flex mx-auto mt-4">
-        <Button variant="ghost" className="w-full" onClick={commit}>
-          Commit Actions
-        </Button>
-      </div>
+      <Outlet context={{ createInvoice, commit }} />
     </div>
   );
 }
